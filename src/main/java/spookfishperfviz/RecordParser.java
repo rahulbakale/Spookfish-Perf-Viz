@@ -21,28 +21,10 @@ package spookfishperfviz;
  * @author Rahul Bakale
  * @since Nov, 2014
  */
-public final class Record {
+public abstract class RecordParser {
 	
-	private final String eventName;
-	private final long timestamp;
-	private final double latency;
+	protected abstract boolean isIgnore(String line);
 
-	public Record(final String eventName, final long timestamp, final double latency) {
-		this.eventName = eventName;
-		this.timestamp = timestamp;
-		this.latency = latency;
-	}
-
-	public String getEventName() {
-		return this.eventName;
-	}
-
-	public long getTimestamp() {
-		return this.timestamp;
-	}
-
-	public double getLatency() {
-		return this.latency;
-	}
+	protected abstract Record parse(String line);
 
 }

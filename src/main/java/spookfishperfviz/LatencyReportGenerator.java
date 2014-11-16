@@ -31,6 +31,7 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.Reader;
 import java.lang.management.ManagementFactory;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -59,7 +60,8 @@ public final class LatencyReportGenerator {
 
 	private static final AtomicInteger uniquifier = new AtomicInteger();
 
-	public static Path generateReport(	final FileRecordIterator recordIterator, 
+	public static Path generateReport(	final Reader source,
+										final RecordParser parser, 
 										final TimeUnit latencyUnit, 
 										final double[] intervalPointsForLatencyHistogram, 
 										final double[] percentileKeys, 
@@ -73,10 +75,11 @@ public final class LatencyReportGenerator {
 			}
 		};
 
-		return generateReport(recordIterator, latencyStatsToHtmlFunc, outputFilePath);
+		return generateReport(source, parser, latencyStatsToHtmlFunc, outputFilePath);
 	}
 
-	public static Path generateReport(	final FileRecordIterator recordIterator, 
+	public static Path generateReport(	final Reader source,
+										final RecordParser parser, 
 										final TimeUnit latencyUnit,
 										final double[] intervalPointsForLatencyHistogram, 
 										final double[] percentileKeys, 
@@ -92,10 +95,11 @@ public final class LatencyReportGenerator {
 			}
 		};
 
-		return generateReport(recordIterator, latencyStatsToHtmlFunc, outputFilePath);
+		return generateReport(source, parser, latencyStatsToHtmlFunc, outputFilePath);
 	}
 
-	public static Path generateReport(	final FileRecordIterator recordIterator, 
+	public static Path generateReport(	final Reader source,
+										final RecordParser parser, 
 										final TimeUnit latencyUnit,
 										final double[] intervalPointsForLatencyHistogram, 
 										final double[] percentileKeys, 
@@ -113,35 +117,39 @@ public final class LatencyReportGenerator {
 			}
 		};
 
-		return generateReport(recordIterator, latencyStatsToHtmlFunc, outputFilePath);
+		return generateReport(source, parser, latencyStatsToHtmlFunc, outputFilePath);
 	}
 
-	private static Path generateReport(	final FileRecordIterator recordIterator, 
+	private static Path generateReport(	final Reader source,
+										final RecordParser parser, 
 										final LatencyStatsToHtmlFunc latencyStatsToHtmlFunc, 
 										final String outputFilePath) throws IOException {
 
-		final Path reportFilePath;
+		try (RecordIterator recordIterator = RecordIterator.create(source, parser);)
+		{
+			final Path reportFilePath;
 
-		if (false) {
+			if (false) {
 
-			// TODO - enable after adding feature to read from raw file if the
-			// contents of input file have not changed since last read.
+				// TODO - enable after adding feature to read from raw file if the
+				// contents of input file have not changed since last read.
 
-			final File rawFile = createRawFile(recordIterator);
-			reportFilePath = generateReport(rawFile, latencyStatsToHtmlFunc, outputFilePath);
+				final File rawFile = createRawFile(recordIterator);
+				reportFilePath = generateReport(rawFile, latencyStatsToHtmlFunc, outputFilePath);
 
-		} else {
-			final Map<String, List<TimestampAndLatency>> data = new TreeMap<>();
+			} else {
+				final Map<String, List<TimestampAndLatency>> data = new TreeMap<>();
 
-			while (recordIterator.hasNext()) {
-				final Record record = recordIterator.next();
-				addRecord(record.getEventType(), record.getTimestamp(), record.getLatency(), data);
+				while (recordIterator.hasNext()) {
+					final Record record = recordIterator.next();
+					addRecord(record.getEventName(), record.getTimestamp(), record.getLatency(), data);
+				}
+
+				reportFilePath = generateReport(data, latencyStatsToHtmlFunc, outputFilePath);
 			}
 
-			reportFilePath = generateReport(data, latencyStatsToHtmlFunc, outputFilePath);
+			return reportFilePath;
 		}
-
-		return reportFilePath;
 	}
 
 	private static Path generateReport(	final File rawDataFile, 
@@ -272,7 +280,7 @@ public final class LatencyReportGenerator {
 		list.add(new TimestampAndLatency(timestamp, latency));
 	}
 
-	private static File createRawFile(final FileRecordIterator recordIterator) throws IOException, FileNotFoundException {
+	private static File createRawFile(final RecordIterator recordIterator) throws IOException, FileNotFoundException {
 		
 		final String tmpIODir = System.getProperty("java.io.tmpdir");
 		final Path baseDir = Files.createDirectories(Paths.get(tmpIODir, "perfstats_jackpot"));
@@ -297,11 +305,11 @@ public final class LatencyReportGenerator {
 
 				final Record record = recordIterator.next();
 
-				final String apiDescription = record.getEventType();
+				final String eventName = record.getEventName();
 				final long timestamp = record.getTimestamp();
 				final double latency = record.getLatency();
 
-				dos.writeUTF(apiDescription);
+				dos.writeUTF(eventName);
 				dos.writeLong(timestamp);
 				dos.writeDouble(latency);
 			}

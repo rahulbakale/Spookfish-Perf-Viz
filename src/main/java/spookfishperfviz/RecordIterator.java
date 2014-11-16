@@ -17,8 +17,7 @@
 
 package spookfishperfviz;
 
-import java.io.File;
-import java.io.FileNotFoundException;
+import java.io.Reader;
 import java.util.Iterator;
 import java.util.NoSuchElementException;
 import java.util.Scanner;
@@ -27,22 +26,59 @@ import java.util.Scanner;
  * @author Rahul Bakale
  * @since Nov, 2014
  */
-public abstract class FileRecordIterator implements Iterator<Record>, AutoCloseable {
+final class RecordIterator implements Iterator<Record>, AutoCloseable {
 	
+	/*private static RecordIterator createForFileSource(final File file, final RecordParser parser) throws IOException {
+
+		@SuppressWarnings("resource")
+		final FileReader fr = new FileReader(file);
+
+		try {
+			@SuppressWarnings("resource")
+			final Reader br = new BufferedReader(fr);
+
+			try {
+				final RecordIterator itr = create(br, parser);
+				return itr;
+
+			} catch (Throwable t) {
+
+				try {
+					br.close();
+				} catch (Throwable e) {
+					t.addSuppressed(e);
+				}
+
+				throw t;
+			}
+		} catch (Throwable t) {
+
+			try {
+				fr.close();
+			} catch (Throwable e) {
+				t.addSuppressed(e);
+			}
+
+			throw t;
+		}
+	}*/
+	
+	static RecordIterator create(final Reader source, final RecordParser parser) {
+		return new RecordIterator(source, parser);
+	}
+
 	private final Scanner scanner;
+	private final RecordParser parser;
 	private Record bufferedRecord;
 
-	protected FileRecordIterator(final String filePath) throws FileNotFoundException {
+	private RecordIterator(final Reader source, final RecordParser parser) {
 
-		final Scanner s = new Scanner(new File(filePath));
+		final Scanner s = new Scanner(source);
 		s.useDelimiter("\r\n|[\n\r\u2028\u2029\u0085]");
 
 		this.scanner = s;
+		this.parser = parser;
 	}
-
-	protected abstract boolean ignore(String line);
-
-	protected abstract Record parse(String line);
 
 	@Override
 	public final boolean hasNext() {
@@ -78,12 +114,23 @@ public abstract class FileRecordIterator implements Iterator<Record>, AutoClosea
 		return next;
 	}
 
+	@Override
+	public final void remove() {
+		throw new UnsupportedOperationException();
+	}
+
+	@Override
+	public final void close() {
+		this.scanner.close();
+		this.bufferedRecord = null;
+	}
+
 	/**
 	 * Must never return null
 	 */
 	private Record readNextRecord() {
 		final String line = readNextLine();
-		final Record record = parse(line);
+		final Record record = this.parser.parse(line);
 
 		assert record != null;
 
@@ -96,21 +143,9 @@ public abstract class FileRecordIterator implements Iterator<Record>, AutoClosea
 		while (true) {
 			final String line = s.next();
 
-			if (!ignore(line)) {
+			if (!this.parser.isIgnore(line)) {
 				return line;
 			}
 		}
 	}
-
-	@Override
-	public final void remove() {
-		throw new UnsupportedOperationException();
-	}
-
-	@Override
-	public final void close() {
-		this.scanner.close();
-		this.bufferedRecord = null;
-	}
-
 }
