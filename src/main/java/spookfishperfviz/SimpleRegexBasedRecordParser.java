@@ -51,7 +51,8 @@ public final class SimpleRegexBasedRecordParser extends RecordParser {
 
 	@Override
 	public final boolean isIgnore(final String line) {
-		return line.matches(this.ignorePattern);
+		final String pattern = this.ignorePattern;
+		return pattern != null && line.matches(pattern);
 	}
 
 	@Override

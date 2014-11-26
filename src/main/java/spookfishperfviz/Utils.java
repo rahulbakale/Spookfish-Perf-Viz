@@ -23,6 +23,7 @@ import static java.math.BigDecimal.TEN;
 import java.io.BufferedWriter;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.lang.reflect.Array;
 import java.math.BigDecimal;
 import java.math.MathContext;
 import java.math.RoundingMode;
@@ -36,6 +37,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Scanner;
 import java.util.Set;
+import java.util.concurrent.TimeUnit;
 
 /**
  * @author Rahul Bakale
@@ -690,5 +692,74 @@ final class Utils {
 		}
 
 		return intervalPoints;
+	}
+
+	static <T> T parseType(final Class<T> type, final String s) throws ParseException {
+
+		boolean internalError = false;
+
+		try {
+			final Object value;
+
+			if ((type == Boolean.class) || (type == boolean.class)) {
+				value = Boolean.valueOf(s);
+
+			} else if ((type == Byte.class) || (type == byte.class)) {
+				value = Byte.valueOf(s);
+
+			} else if ((type == Character.class) || (type == char.class)) {
+
+				if ((s == null) || (s.length() != 1)) {
+					throw new ParseException(type, s);
+				}
+				value = Character.valueOf(s.charAt(0));
+
+			} else if ((type == Short.class) || (type == short.class)) {
+				value = Short.valueOf(s);
+
+			} else if ((type == Integer.class) || (type == int.class)) {
+				value = Integer.valueOf(s);
+
+			} else if ((type == Long.class) || (type == long.class)) {
+				value = Long.valueOf(s);
+
+			} else if ((type == Float.class) || (type == float.class)) {
+				value = Float.valueOf(s);
+
+			} else if ((type == Double.class) || (type == double.class)) {
+				value = Double.valueOf(s);
+
+			} else if (type == String.class) {
+				value = s;
+
+			} else if (type == TimeUnit.class) {
+				value = TimeUnit.valueOf(s);
+
+			} else if ((type == Boolean[].class) || (type == boolean[].class) || (type == Short[].class) || (type == short[].class)
+					|| (type == Integer[].class) || (type == int[].class) || (type == Long[].class) || (type == long[].class)
+					|| (type == Float[].class) || (type == float[].class) || (type == Double[].class) || (type == double[].class)
+					|| (type == TimeUnit[].class)) {
+
+				final String[] elements = s.split("\\s*,\\s*", -1);
+				final int len = elements.length;
+				value = Array.newInstance(type.getComponentType(), len);
+				for (int i = 0; i < len; i++) {
+					Array.set(value, i, parseType(type.getComponentType(), elements[i]));
+				}
+			} else {
+				internalError = true;
+				throw new IllegalArgumentException("Internal error: Illegal type <" + type + ">");
+			}
+
+			return (T) value;
+
+		} catch (final Exception e) {
+
+			if ((e instanceof ParseException) || internalError) {
+				throw e;
+			}
+
+			throw new ParseException(type, s);
+		}
 	}
 }

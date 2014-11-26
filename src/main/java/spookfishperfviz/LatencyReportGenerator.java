@@ -23,6 +23,7 @@ import static java.nio.file.StandardOpenOption.WRITE;
 
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
+import java.io.BufferedReader;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.EOFException;
@@ -30,6 +31,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
+import java.io.FileReader;
 import java.io.IOException;
 import java.io.Reader;
 import java.lang.management.ManagementFactory;
@@ -59,6 +61,35 @@ public final class LatencyReportGenerator {
 	}
 
 	private static final AtomicInteger uniquifier = new AtomicInteger();
+
+	public static void run(final Options options) throws Exception {
+
+		final String ignorePattern = options.getOptional("ignorePattern", String.class, null);
+		final String parsePattern = options.getMandatory("parsePattern", String.class);
+		final String timestampPattern = options.getMandatory("timestampPattern", String.class);
+		final RecordParser parser = SimpleRegexBasedRecordParser.create(ignorePattern, parsePattern, timestampPattern);
+
+		final TimeUnit latencyUnit = options.getMandatory("latencyUnit", TimeUnit.class);
+
+		final double[] histogramIntervalPoints = options.getMandatory("histogramIntervalPoints", double[].class);
+		final double[] percentilePoints = options.getMandatory("percentilePoints", double[].class);
+		final Integer heatMapMaxIntervalPoints = options.getMandatory("heatMapMaxIntervalPoints", int.class);
+
+		final String inFile = options.getMandatory("inFile", String.class);
+		final String outFile = options.getMandatory("outFile", String.class);
+
+		final int heatMapSingleAreaWidth = 20;
+
+		final Path path;
+
+		try (final Reader fr = new FileReader(inFile); final Reader source = new BufferedReader(fr);) {
+			
+			path = generateReport(source, parser, latencyUnit, histogramIntervalPoints, percentilePoints, 
+									heatMapMaxIntervalPoints.intValue(), heatMapSingleAreaWidth, outFile);
+		}
+
+		System.out.println("Report generated at <" + path + ">");
+	}
 
 	public static Path generateReport(	final Reader source,
 										final RecordParser parser, 
