@@ -263,17 +263,14 @@ final class TimeSeriesLatencyDensity {
 				if (skipLabel == false) {
 					yAxisLabelsSVG.append("<text style=\"dominant-baseline: central;\" x=\"").append(Y_AXIS_LABEL_START_X).append("\" y=\"")
 							.append(yAxisLabelStartY).append("\">").append(yAxisPaddedLabels.get(i)).append("</text>").append(NL);
+					
+					yAxisTicksSVG
+						.append("<line x1=\"").append(yAxisMajorTickStartX)
+						.append("\" y1=\"").append(yAxisLabelStartY)
+						.append("\" x2=\"").append(yAxisTickEndX)
+						.append("\" y2=\"").append(yAxisLabelStartY)
+						.append("\"/>").append(NL);
 				}
-
-				/*
-				 * Un-comment if minor ticks are required
-				 * 
-				 * final double yAxisTickStartX = skipLabel ? yAxisMinorTickStartX : yAxisMajorTickStartX;
-				 * 
-				 * yAxisTicksSVG.append("<line x1=\"").append(yAxisTickStartX).append("\" y1=\"").append(yAxisLabelStartY)
-				 * .append("\" x2=\"").append(yAxisTickEndX).append("\" y2=\"").append(yAxisLabelStartY).append("\"/>")
-				 * .append(NL);
-				 */
 
 				yAxisLabelStartY += heatMapSingleAreaHeight;
 			}
