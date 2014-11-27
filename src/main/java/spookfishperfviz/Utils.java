@@ -762,4 +762,38 @@ final class Utils {
 			throw new ParseException(type, s);
 		}
 	}
+
+	static String toShortForm(final TimeUnit timeUnit) {
+
+		final String result;
+
+		switch (timeUnit) {
+		case DAYS:
+			result = "days";
+			break;
+		case HOURS:
+			result = "hours";
+			break;
+		case MINUTES:
+			result = "minutes";
+			break;
+		case SECONDS:
+			result = "s";
+			break;
+		case MILLISECONDS:
+			result = "ms";
+			break;
+		case MICROSECONDS:
+			result = "\u00B5s";
+			break;
+		case NANOSECONDS:
+			result = "ns";
+			break;
+
+		default:
+			throw new IllegalArgumentException("Internal error: Illegal time unit <" + timeUnit + ">");
+		}
+
+		return result;
+	}
 }
