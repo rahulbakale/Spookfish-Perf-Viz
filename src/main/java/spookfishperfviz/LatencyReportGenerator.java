@@ -685,7 +685,7 @@ public final class LatencyReportGenerator {
 		}
 
 		private Percentiles getPercentiles(final double[] keys) {
-			return Utils.getPercentiles(this.sortedLatencies, keys);
+			return Utils.getPercentiles(this.sortedLatencies, keys, Utils.toShortForm(this.latencyUnit));
 		}
 
 		private String getShortSummary() {
@@ -890,11 +890,7 @@ public final class LatencyReportGenerator {
 		}
 
 		private static String toDisplayString(final double d) {
-			try {
-				return Double.isNaN(d) ? String.valueOf(d) : String.format("%1$,.3f", Double.valueOf(d));
-			} catch (final NumberFormatException e) {
-				throw new RuntimeException("" + d, e);
-			}
+			return Utils.toDisplayString(d, 3, true);
 		}
 	}
 

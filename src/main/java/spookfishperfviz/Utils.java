@@ -302,7 +302,7 @@ final class Utils {
 		return copy;
 	}
 
-	static Percentiles getPercentiles(final double[] sortedData, final double[] keys) {
+	static Percentiles getPercentiles(final double[] sortedData, final double[] keys, final String valueUnit) {
 		
 		final double[] sortedKeys = Utils.sort(keys);
 
@@ -325,7 +325,7 @@ final class Utils {
 			k++;
 		}
 
-		return new Percentiles(Arrays.copyOfRange(validKeys, 0, k), Arrays.copyOfRange(result, 0, k));
+		return new Percentiles(Arrays.copyOfRange(validKeys, 0, k), Arrays.copyOfRange(result, 0, k), valueUnit);
 	}
 
 	/**
@@ -795,5 +795,18 @@ final class Utils {
 		}
 
 		return result;
+	}
+
+	static String toDisplayString(final double value, final int precision, final boolean useGroupSeparator) {
+		
+		final StringBuilder format = new StringBuilder("%1$");
+	
+		if (useGroupSeparator) {
+			format.append(',');
+		}
+	
+		format.append('.').append(precision).append('f');
+	
+		return Double.isNaN(value) ? String.valueOf(value) : String.format(format.toString(), Double.valueOf(value));
 	}
 }

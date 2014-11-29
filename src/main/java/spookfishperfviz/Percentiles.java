@@ -25,8 +25,9 @@ final class Percentiles {
 	
 	private final double[] keys;
 	private final double[] values;
+	private final String valueUnit;
 
-	Percentiles(final double[] keys, final double[] values) {
+	Percentiles(final double[] keys, final double[] values, final String valueUnit) {
 		
 		if (keys.length != values.length) {
 			throw new IllegalArgumentException();
@@ -34,6 +35,7 @@ final class Percentiles {
 
 		this.keys = keys;
 		this.values = values;
+		this.valueUnit = valueUnit;
 	}
 
 	public String toSVG(final boolean wrapInHtmlBody) {
@@ -51,6 +53,7 @@ final class Percentiles {
 
 		final double[] keys = this.keys;
 		final double[] values = this.values;
+		final String valUnit = this.valueUnit;
 
 		final String[] keyStrs = new String[n];
 		final String[] valueStrs = new String[n];
@@ -73,7 +76,7 @@ final class Percentiles {
 
 			{
 				final double value = values[i];
-				final String valueStr = String.format("%f", Double.valueOf(value));
+				final String valueStr = Utils.toDisplayString(value, 3, true) + ' ' + valUnit;
 
 				final int vLen = valueStr.length();
 				if (vLen > vPadding) {
