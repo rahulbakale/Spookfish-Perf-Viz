@@ -156,7 +156,7 @@ final class HorizontalBarChart {
 		final int SPACE_BETWEEN_LABEL_AND_LINE = 10;
 
 		final int maxLabelLength = getMaxLabelLength(labels);
-		final double maxLabelWidth = maxLabelLength * SVGConstants.FONT_WIDTH;
+		final double maxLabelWidth = maxLabelLength * SVGConstants.MONOSPACE_FONT_WIDTH;
 		final double xLineStart = LABEL_START_X + maxLabelWidth + SPACE_BETWEEN_LABEL_AND_LINE;
 		final double boxWidth = xLineStart + maxLineLength + SVGConstants.LEFT_RIGHT_MARGIN;
 		final int boxHeight = (size + 1) * SVGConstants.LINE_GAP;
@@ -168,8 +168,8 @@ final class HorizontalBarChart {
 		svgLines.append("<g style=\"stroke:grey; stroke-width:5\">").append(NL);
 
 		final StringBuilder svgLabels = new StringBuilder();
-		svgLabels.append("<g fill=\"black\" style=\"font-family:").append(SVGConstants.FONT_FAMILY).append(";font-size:")
-				.append(SVGConstants.FONT_SIZE).append("px;\">").append(NL);
+		svgLabels.append("<g fill=\"black\" style=\"font-family:").append(SVGConstants.MONOSPACE_FONT_FAMILY).append(";font-size:")
+				.append(SVGConstants.MONOSPACE_FONT_SIZE).append("px;\">").append(NL);
 
 		for (int i = 0, y1 = SVGConstants.LINE_GAP; i < size; i++, y1 += SVGConstants.LINE_GAP) {
 			final double d = data[i];

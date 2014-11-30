@@ -27,10 +27,10 @@ final class SVGConstants {
 	static final int TOP_DOWN_MARGIN = 10;
 	static final int LINE_GAP = 18;
 
-	static final String FONT_FAMILY = "Courier New, Courier, monospace";
-	static final double FONT_SIZE = LINE_GAP - 2;
-	static final double FONT_WIDTH_TO_FONT_SIZE_RATIO = 0.625; // specific to Courier New font.
-	static final double FONT_WIDTH = FONT_SIZE * FONT_WIDTH_TO_FONT_SIZE_RATIO;
+	static final String MONOSPACE_FONT_FAMILY = "Courier New, Courier, monospace";
+	static final double MONOSPACE_FONT_SIZE = LINE_GAP - 2;
+	private static final double MONOSPACE_FONT_WIDTH_TO_FONT_SIZE_RATIO = 0.625; // specific to Courier New font.
+	static final double MONOSPACE_FONT_WIDTH = MONOSPACE_FONT_SIZE * MONOSPACE_FONT_WIDTH_TO_FONT_SIZE_RATIO;
 
 	static final String SERIF_FONT_FAMILY = "\"Times New Roman\", Times, Serif";
 	static final double SERIF_FONT_SIZE = 16;

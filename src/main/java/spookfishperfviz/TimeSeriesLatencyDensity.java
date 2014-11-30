@@ -49,7 +49,7 @@ final class TimeSeriesLatencyDensity {
 
 	private static final double X_AXIS_LABEL_FONT_SIZE = 10; // TODO - add to
 																// SVGConstants.
-	private static final String X_AXIS_LABEL_FONT_FAMILY = SVGConstants.FONT_FAMILY;
+	private static final String X_AXIS_LABEL_FONT_FAMILY = SVGConstants.MONOSPACE_FONT_FAMILY;
 
 	/*
 	 * private static final String[] COLORS = { "#FFE5E5", "#FFCCCC", "#FFB2B2",
@@ -168,18 +168,18 @@ final class TimeSeriesLatencyDensity {
 		final int SPACE_BETWEEN_TITLE_AND_LABEL = 10;
 
 		final String yAxisTitle = "Latency" + " (" + Utils.toShortForm(yAxisUnit) + ")";
-		final double Y_AXIS_TITLE_FONT_SIZE = SVGConstants.FONT_SIZE;
-		final String Y_AXIS_TITLE_FONT_FAMILY = SVGConstants.FONT_FAMILY;
+		final double Y_AXIS_TITLE_FONT_SIZE = SVGConstants.MONOSPACE_FONT_SIZE;
+		final String Y_AXIS_TITLE_FONT_FAMILY = SVGConstants.MONOSPACE_FONT_FAMILY;
 		final double Y_AXIS_TITLE_START_X = START_X;
-		final double Y_AXIS_TITLE_END_X = Y_AXIS_TITLE_START_X + SVGConstants.FONT_SIZE;
+		final double Y_AXIS_TITLE_END_X = Y_AXIS_TITLE_START_X + SVGConstants.MONOSPACE_FONT_SIZE;
 
-		final double Y_AXIS_LABEL_FONT_SIZE = SVGConstants.FONT_SIZE;
-		final String Y_AXIS_LABEL_FONT_FAMILY = SVGConstants.FONT_FAMILY;
+		final double Y_AXIS_LABEL_FONT_SIZE = SVGConstants.MONOSPACE_FONT_SIZE;
+		final String Y_AXIS_LABEL_FONT_FAMILY = SVGConstants.MONOSPACE_FONT_FAMILY;
 		final double Y_AXIS_LABEL_START_X = Y_AXIS_TITLE_END_X + SPACE_BETWEEN_TITLE_AND_LABEL;
 
 		final String X_AXIS_TITLE = "Time";
-		final double X_AXIS_TITLE_FONT_SIZE = SVGConstants.FONT_SIZE;
-		final String X_AXIS_TITLE_FONT_FAMILY = SVGConstants.FONT_FAMILY;
+		final double X_AXIS_TITLE_FONT_SIZE = SVGConstants.MONOSPACE_FONT_SIZE;
+		final String X_AXIS_TITLE_FONT_FAMILY = SVGConstants.MONOSPACE_FONT_FAMILY;
 
 		final double BOX_START_Y = START_Y;
 
@@ -192,7 +192,7 @@ final class TimeSeriesLatencyDensity {
 		final ArrayList<String> yAxisPaddedLabels = 
 				Utils.getPaddedLabels(yAxisLabels, yAxisMaxLabelLength, new ArrayListSupplier<String>(), true);
 
-		final double yAxisMaxLabelWidth = yAxisMaxLabelLength * SVGConstants.FONT_WIDTH;
+		final double yAxisMaxLabelWidth = yAxisMaxLabelLength * SVGConstants.MONOSPACE_FONT_WIDTH;
 
 		final double yAxisMajorTickStartX = Y_AXIS_LABEL_START_X + yAxisMaxLabelWidth + SPACE_BETWEEN_LABEL_AND_TICK;
 		final double yAxisTickEndX = yAxisMajorTickStartX + TICK_LENGTH;
@@ -210,7 +210,7 @@ final class TimeSeriesLatencyDensity {
 		final double heatMapBoxHeight = heatMapBoxEndY - BOX_START_Y;
 		final double heatMapBoxWidth = heatMapBoxEndX - heatMapBoxStartX;
 
-		final double yAxisTitleStartY = BOX_START_Y + ((heatMapBoxHeight / 2.0) - (SVGConstants.FONT_SIZE / 2.0));
+		final double yAxisTitleStartY = BOX_START_Y + ((heatMapBoxHeight / 2.0) - (Y_AXIS_TITLE_FONT_SIZE / 2.0));
 
 		final double xAxisTickStartY = heatMapBoxEndY;
 		final double xAxisMajorTickEndY = xAxisTickStartY + TICK_LENGTH;

@@ -91,12 +91,12 @@ final class Utils {
 			}
 		}
 
-		final double width = (SVGConstants.LEFT_RIGHT_MARGIN * 2) + (maxLineLength * SVGConstants.FONT_WIDTH);
+		final double width = (SVGConstants.LEFT_RIGHT_MARGIN * 2) + (maxLineLength * SVGConstants.MONOSPACE_FONT_WIDTH);
 
 		final StringBuilder buf = new StringBuilder();
 		buf.append("<svg height=\"").append(height).append("\" width=\"").append(width).append("\">").append(NL);
 		buf.append("<rect height=\"").append(height).append("\" width=\"").append(width).append("\" style=\"fill:white;stroke:black;stroke-width:1\"/>").append(NL);
-		buf.append("<g fill=\"black\" style=\"font-family:").append(SVGConstants.FONT_FAMILY).append(";font-size:").append(SVGConstants.FONT_SIZE).append("px;\">").append(NL);
+		buf.append("<g fill=\"black\" style=\"font-family:").append(SVGConstants.MONOSPACE_FONT_FAMILY).append(";font-size:").append(SVGConstants.MONOSPACE_FONT_SIZE).append("px;\">").append(NL);
 		buf.append(texts);
 		buf.append("</g>").append(NL);
 		buf.append("</svg>");
