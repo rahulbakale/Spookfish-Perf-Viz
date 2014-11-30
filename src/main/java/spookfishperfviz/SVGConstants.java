@@ -32,6 +32,9 @@ final class SVGConstants {
 	static final double FONT_WIDTH_TO_FONT_SIZE_RATIO = 0.625; // specific to Courier New font.
 	static final double FONT_WIDTH = FONT_SIZE * FONT_WIDTH_TO_FONT_SIZE_RATIO;
 
+	static final String SERIF_FONT_FAMILY = "\"Times New Roman\", Times, Serif";
+	static final double SERIF_FONT_SIZE = 16;
+
 	private SVGConstants() {
 		//
 	}

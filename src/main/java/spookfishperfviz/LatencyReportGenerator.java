@@ -707,8 +707,73 @@ public final class LatencyReportGenerator {
 					IND + "   Excess Kurtosis = " + toDisplayString(this.excessKurtosis);
 		}
 
-		private String getShortSummaryAsSvg() {
-			return Utils.toSvgText(getShortSummary());
+		private String getShortSummaryHtml() {
+
+			final String NL = System.lineSeparator();
+			final String timeUnit = Utils.toShortForm(this.latencyUnit);
+			
+			final String fontFamily = SVGConstants.SERIF_FONT_FAMILY;
+			final double fontSize = SVGConstants.SERIF_FONT_SIZE;
+			final String columnStyle1 = "style=\"padding: 0px 0px 0px 10px; text-align: right;\"";
+			final String columnStyle2 = "style=\"padding: 0px 0px 0px 30px; text-align: right;\"";
+			final String columnStyle3 = "style=\"padding: 0px 10px 0px 10px; text-align: left;\"";
+
+			//TODO - create a generic method that creates HTML table and remember to use escape HTML special characters.
+			
+			final String html = 
+					"<table style=\"border:1px solid black; font-family: " + fontFamily + "; font-size: " + fontSize + "px;\">" + NL +
+					"	<tr style=\"outline:1px solid black;\">" + NL +
+					"		<th " + columnStyle1 + ">Name</th>" + NL +
+					"		<th " + columnStyle2 + ">Value</th>" + NL + 
+					"		<th " + columnStyle3 + ">Unit</th>" + NL + 
+					"	</tr>" + NL +
+					"	<tr>" + NL +
+					"		<td " + columnStyle1 + ">Event count</td>" + NL +
+					"		<td " + columnStyle2 + ">" + this.sampleCount + "</td>" + NL +
+					"	</tr>" + NL + 
+					"	<tr>" + NL +
+					"		<td " + columnStyle1 + ">Median</td>" + NL +
+					"		<td " + columnStyle2 + ">" + toDisplayString(this.median) + "</td>" + NL +
+					"		<td " + columnStyle3 + ">" + timeUnit + "</td>" + NL +
+					"	</tr>" + NL +
+					"	<tr>" + NL +
+					"		<td " + columnStyle1 + ">Mean</td>" + NL +
+					"		<td " + columnStyle2 + ">" + toDisplayString(this.mean) + "</td>" + NL +
+					"		<td " + columnStyle3 + ">" + timeUnit + "</td>" + NL +
+					"	</tr>" + NL +
+					"	<tr>" + NL +
+					"		<td " + columnStyle1 + ">Minimum</td>" + NL +
+					"		<td " + columnStyle2 + ">" + toDisplayString(this.min) + "</td>" + NL +
+					"		<td " + columnStyle3 + ">" + timeUnit + "</td>" + NL +
+					"	</tr>" + NL +
+					"	<tr>" + NL +
+					"		<td " + columnStyle1 + ">Maximum</td>" + NL +
+					"		<td " + columnStyle2 + ">" + toDisplayString(this.max) + "</td>" + NL +
+					"		<td " + columnStyle3 + ">" + timeUnit + "</td>" + NL +
+					"	</tr>" + NL +
+					"	<tr>" + NL +
+					"		<td " + columnStyle1 + ">Standard deviation</td>" + NL +
+					"		<td " + columnStyle2 + ">" + toDisplayString(this.stdDeviation) + "</td>" + NL +
+					"	</tr>" + NL +
+					"	<tr>" + NL +
+					"		<td " + columnStyle1 + ">Variance</td>" + NL +
+					"		<td " + columnStyle2 + ">" + toDisplayString(this.variance) + "</td>" + NL +
+					"	</tr>" + NL +
+					"	<tr>" + NL +
+					"		<td " + columnStyle1 + ">Skewness</td>" + NL +
+					"		<td " + columnStyle2 + ">" + toDisplayString(this.skewness) + "</td>" + NL +
+					"	</tr>" + NL +
+					"	<tr>" + NL +
+					"		<td " + columnStyle1 + ">Kurtosis</td>" + NL +
+					"		<td " + columnStyle2 + ">" + toDisplayString(this.kurtosis) + "</td>" + NL +
+					"	</tr>" + NL +
+					"	<tr>" + NL +
+					"		<td " + columnStyle1 + ">Excess Kurtosis</td>" + NL +
+					"		<td " + columnStyle2 + ">" + toDisplayString(this.excessKurtosis) + "</td>" + NL +
+					"	</tr>" + NL +
+					"</table>" + NL;
+
+			return html;
 		}
 
 		double[] getLatencies() {
@@ -865,7 +930,7 @@ public final class LatencyReportGenerator {
 					"</tr>" + NL;
 
 			final String content = 
-					paragraph(linkWithId(textA, linkIdA) + ':', style) + getShortSummaryAsSvg() + BR + BR + 
+					paragraph(linkWithId(textA, linkIdA) + ':', style) + getShortSummaryHtml() + BR + BR +
 					paragraph(linkWithId(textB, linkIdB) + ':', style) + createHistogram(intervalPointsForLatencyHistogram).toSVG(new StripTrailingZeroesAfterDecimalFunction(false), false) + BR + BR + 
 					paragraph(linkWithId(textC, linkIdC) + ':', style) + getPercentiles(percentileKeys).toSVG(false) + BR + BR + 
 					paragraph(linkWithId(textD, linkIdD) + ':', style) + trxCountBarChartSVG + BR + BR + heatMapSVG.getSvg();
