@@ -22,9 +22,13 @@ package spookfishperfviz;
  * @since Nov, 2014
  */
 public abstract class RecordParser {
-	
-	public abstract boolean isIgnore(String line);
 
-	public abstract Record parse(String line);
+	protected RecordParser() {
+		//
+	}
+
+	protected abstract boolean isIgnore(String line);
+
+	protected abstract Record parse(String line);
 
 }

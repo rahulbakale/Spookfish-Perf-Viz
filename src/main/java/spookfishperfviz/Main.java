@@ -38,4 +38,8 @@ public final class Main {
 			throw BadOptionsException.illegalValue("task", "<" + task + ">", null);
 		}
 	}
+
+	private Main() {
+		//
+	}
 }

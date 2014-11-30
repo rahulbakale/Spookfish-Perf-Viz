@@ -50,13 +50,13 @@ public final class SimpleRegexBasedRecordParser extends RecordParser {
 	}
 
 	@Override
-	public final boolean isIgnore(final String line) {
+	protected final boolean isIgnore(final String line) {
 		final String pattern = this.ignorePattern;
 		return pattern != null && line.matches(pattern);
 	}
 
 	@Override
-	public final Record parse(final String line) {
+	protected final Record parse(final String line) {
 
 		try {
 			final Matcher matcher = this.parsePatternObj.matcher(line);

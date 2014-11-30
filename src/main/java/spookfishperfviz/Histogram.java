@@ -24,25 +24,25 @@ import java.util.Set;
  * @author Rahul Bakale
  * @since Nov, 2014
  */
-public abstract class Histogram<C extends Comparable<C>> {
+abstract class Histogram<C extends Comparable<C>> {
 
 	Histogram() {
 		//
 	}
 
-	public static Histogram<Double> create(final double[] data, final double[] intervalPoints) {
+	static Histogram<Double> create(final double[] data, final double[] intervalPoints) {
 		return Histogram2.newInstance(data, intervalPoints, false);
 	}
 
-	public static Histogram<Double> create(final double[] data, final int nIntervalPoints) {
+	static Histogram<Double> create(final double[] data, final int nIntervalPoints) {
 		return Histogram2.newInstance(data, nIntervalPoints, false);
 	}
 
-	public static <T extends Comparable<T>> Histogram<T> create(final Collection<T> data, final Set<T> intervalPoints) {
+	static <T extends Comparable<T>> Histogram<T> create(final Collection<T> data, final Set<T> intervalPoints) {
 		return Histogram2.newInstance(data, intervalPoints, false);
 	}
 
-	public abstract String toSVG(Function<C, String> dataPointFormatter, boolean wrapInHtmlBody);
+	abstract String toSVG(Function<C, String> dataPointFormatter, boolean wrapInHtmlBody);
 
-	public abstract String toString(Function<C, String> dataPointFormatter, int maxHeight, String mark);
+	abstract String toString(Function<C, String> dataPointFormatter, int maxHeight, String mark);
 }

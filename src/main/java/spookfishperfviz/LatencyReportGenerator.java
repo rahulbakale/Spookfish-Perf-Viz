@@ -62,7 +62,7 @@ public final class LatencyReportGenerator {
 
 	private static final AtomicInteger uniquifier = new AtomicInteger();
 
-	public static void run(final Options options) throws Exception {
+	static void run(final Options options) throws Exception {
 
 		final String ignorePattern = options.getOptional("ignorePattern", String.class, null);
 		final String parsePattern = options.getMandatory("parsePattern", String.class);
@@ -91,13 +91,13 @@ public final class LatencyReportGenerator {
 		System.out.println("Report generated at <" + path + ">");
 	}
 
-	public static Path generateReport(	final Reader source,
-										final RecordParser parser, 
-										final TimeUnit latencyUnit, 
-										final double[] intervalPointsForLatencyHistogram, 
-										final double[] percentileKeys, 
-										final double[] intervalPointsForLatencyDensity, 
-										final String outputFilePath) throws IOException {
+	static Path generateReport(	final Reader source,
+								final RecordParser parser, 
+								final TimeUnit latencyUnit, 
+								final double[] intervalPointsForLatencyHistogram, 
+								final double[] percentileKeys, 
+								final double[] intervalPointsForLatencyDensity, 
+								final String outputFilePath) throws IOException {
 		
 		final LatencyStatsToHtmlFunc latencyStatsToHtmlFunc = new LatencyStatsToHtmlFunc() {
 			@Override
