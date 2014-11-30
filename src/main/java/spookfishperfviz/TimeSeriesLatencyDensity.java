@@ -78,7 +78,7 @@ final class TimeSeriesLatencyDensity {
 	private static final Function<IndexedDataPoint<Double>, String> Y_AXIS_LABEL_MAKER = new Function<Density.IndexedDataPoint<Double>, String>() {
 		@Override
 		public String apply(final IndexedDataPoint<Double> i) {
-			return i.toString(new StripTrailingZeroesAfterDecimalFunction(false));
+			return i.toString(new StripTrailingZeroesAfterDecimalFunction(true));
 		}
 	};
 
