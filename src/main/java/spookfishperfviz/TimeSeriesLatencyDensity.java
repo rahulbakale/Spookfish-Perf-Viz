@@ -167,7 +167,7 @@ final class TimeSeriesLatencyDensity {
 		final int SPACE_BETWEEN_LABEL_AND_TICK = 10;
 		final int SPACE_BETWEEN_TITLE_AND_LABEL = 10;
 
-		final String yAxisTitle = "LATENCY" + " (" + yAxisUnit + ")";
+		final String yAxisTitle = "Latency" + " (" + Utils.toShortForm(yAxisUnit) + ")";
 		final double Y_AXIS_TITLE_FONT_SIZE = SVGConstants.FONT_SIZE;
 		final String Y_AXIS_TITLE_FONT_FAMILY = SVGConstants.FONT_FAMILY;
 		final double Y_AXIS_TITLE_START_X = START_X;
@@ -177,7 +177,7 @@ final class TimeSeriesLatencyDensity {
 		final String Y_AXIS_LABEL_FONT_FAMILY = SVGConstants.FONT_FAMILY;
 		final double Y_AXIS_LABEL_START_X = Y_AXIS_TITLE_END_X + SPACE_BETWEEN_TITLE_AND_LABEL;
 
-		final String X_AXIS_TITLE = "TIME";
+		final String X_AXIS_TITLE = "Time";
 		final double X_AXIS_TITLE_FONT_SIZE = SVGConstants.FONT_SIZE;
 		final String X_AXIS_TITLE_FONT_FAMILY = SVGConstants.FONT_FAMILY;
 
@@ -230,11 +230,8 @@ final class TimeSeriesLatencyDensity {
 			yAxisTitleSVG.append("font-family:").append(Y_AXIS_TITLE_FONT_FAMILY).append(";");
 
 			yAxisTitleSVG.append("font-size:").append(Y_AXIS_TITLE_FONT_SIZE).append("px;");
-			yAxisTitleSVG.append("text-anchor: middle;"); // related to rotation
-															// of the title
-			yAxisTitleSVG.append("dominant-baseline: middle;"); // related to
-																// rotation of
-																// the title
+			yAxisTitleSVG.append("text-anchor: middle;"); // related to rotation of the title
+			yAxisTitleSVG.append("dominant-baseline: middle;"); // related to rotation of the title
 			yAxisTitleSVG.append("\"");
 			yAxisTitleSVG.append(" x=\"").append(Y_AXIS_TITLE_START_X).append("\"");
 			yAxisTitleSVG.append(" y=\"").append(yAxisTitleStartY).append("\"");
