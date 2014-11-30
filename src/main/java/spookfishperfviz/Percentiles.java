@@ -23,9 +23,12 @@ package spookfishperfviz;
  */
 final class Percentiles {
 	
+	private static final String KEY_HEADER = "Percentile";
+	
+	
 	private final double[] keys;
 	private final double[] values;
-	private final String valueUnit;
+	private final String valueHeader;
 
 	Percentiles(final double[] keys, final double[] values, final String valueUnit) {
 		
@@ -35,7 +38,7 @@ final class Percentiles {
 
 		this.keys = keys;
 		this.values = values;
-		this.valueUnit = valueUnit;
+		this.valueHeader = "Value (" + valueUnit + ")";
 	}
 
 	public String toSVG(final boolean wrapInHtmlBody) {
@@ -53,7 +56,7 @@ final class Percentiles {
 
 		final double[] keys = this.keys;
 		final double[] values = this.values;
-		final String valUnit = this.valueUnit;
+		final String valHeader = this.valueHeader;
 
 		final String[] keyStrs = new String[n];
 		final String[] valueStrs = new String[n];
@@ -76,7 +79,7 @@ final class Percentiles {
 
 			{
 				final double value = values[i];
-				final String valueStr = Utils.toDisplayString(value, 3, true) + ' ' + valUnit;
+				final String valueStr = Utils.toDisplayString(value, 3, true);
 
 				final int vLen = valueStr.length();
 				if (vLen > vPadding) {
@@ -87,12 +90,19 @@ final class Percentiles {
 				valueStrs[k] = valueStr;
 			}
 		}
+		
+		kPadding = Math.max(kPadding, KEY_HEADER.length());
+		vPadding = Math.max(vPadding, valHeader.length());
+		
+		final String labelStringFormat = "%" + kPadding + "s    %" + vPadding + "s";
 
-		final String[] labels = new String[n];
+		final String[] dataLabels = new String[n];
 		for (int i = 0; i < n; i++) {
-			labels[i] = String.format("%" + kPadding + "s    %" + vPadding + "s", keyStrs[i], valueStrs[i]);
+			dataLabels[i] = String.format(labelStringFormat, keyStrs[i], valueStrs[i]);
 		}
+		
+		final String headerLabel = String.format(labelStringFormat, KEY_HEADER, valHeader);
 
-		return HorizontalBarChart.create(valuesReversed, labels);
+		return HorizontalBarChart.create(valuesReversed, dataLabels, headerLabel);
 	}
 }
