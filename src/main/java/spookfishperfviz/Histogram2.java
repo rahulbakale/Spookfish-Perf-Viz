@@ -110,12 +110,12 @@ final class Histogram2<C extends Comparable<C>> extends Histogram<C> {
 	}
 
 	@Override
-	public String toString(final Function<C, String> dataPointFormatter, final int maxHeight, final String mark) {
+	String toString(final Function<C, String> dataPointFormatter, final int maxHeight, final String mark) {
 		return toBarChart(dataPointFormatter).toString(maxHeight, mark);
 	}
 
 	@Override
-	public String toSVG(final Function<C, String> dataPointFormatter, final boolean wrapInHtmlBody) {
+	String toSVG(final Function<C, String> dataPointFormatter, final boolean wrapInHtmlBody) {
 		return toBarChart(dataPointFormatter).toSVG(wrapInHtmlBody, true);
 	}
 
