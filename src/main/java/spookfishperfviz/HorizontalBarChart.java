@@ -31,42 +31,48 @@ final class HorizontalBarChart {
 		public static final String UNDERSCORE = "_";
 		public static final String DEFAULT = UNDERSCORE;
 	}
-
-	static HorizontalBarChart create(final double[] data, final String[] labels) {
-		return new HorizontalBarChart(data, labels);
+	
+	static HorizontalBarChart create(final double[] data, final String[] dataLabels) {
+		return create(data, dataLabels, null);
 	}
 
-	static HorizontalBarChart create(final long[] data, final String[] labels) {
-		return create(Utils.toDoubles(data), labels);
+	static HorizontalBarChart create(final double[] data, final String[] dataLabels, final String headerLabel) {
+		return new HorizontalBarChart(data, dataLabels, headerLabel);
+	}
+	
+	static HorizontalBarChart create(final int[] data, final String[] dataLabels) {
+		return create(data, dataLabels, null);
 	}
 
-	static HorizontalBarChart create(final int[] data, final String[] labels) {
-		return create(Utils.toDoubles(data), labels);
+	static HorizontalBarChart create(final int[] data, final String[] dataLabels, final String headerLabel) {
+		return create(Utils.toDoubles(data), dataLabels, headerLabel);
 	}
 
-	private final String[] labels;
+	private final String headerLabel;
+	private final String[] dataLabels;
 	private final double[] data;
 	private final double max;
 
 	private final Double nonZeroMin;
 	private final Double nonZeroMax;
 
-	private HorizontalBarChart(final double[] data, final String[] labels) {
+	private HorizontalBarChart(final double[] data, final String[] dataLabels, final String headerLabel) {
 		
 		this.data = data;
-		this.labels = labels;
+		this.dataLabels = dataLabels;
+		this.headerLabel = headerLabel;
 
-		final double[] sorted = Utils.sort(data);
-		final double min = sorted[0];
-		final double max = sorted[sorted.length - 1];
+		final double[] sortedData = Utils.sort(data);
+		final double min = sortedData[0];
+		final double max = sortedData[sortedData.length - 1];
 
 		this.max = max;
 
 		if (min == 0) {
 			Double nonZeroMin = null;
 
-			for (int i = 1; i < sorted.length; i++) {
-				final double d = sorted[i];
+			for (int i = 1; i < sortedData.length; i++) {
+				final double d = sortedData[i];
 				if (d != 0) {
 					nonZeroMin = Double.valueOf(d);
 					break;
@@ -81,8 +87,8 @@ final class HorizontalBarChart {
 		if (max == 0) {
 			Double nonZeroMax = null;
 
-			for (int i = sorted.length - 2; i >= 0; i--) {
-				final double d = sorted[i];
+			for (int i = sortedData.length - 2; i >= 0; i--) {
+				final double d = sortedData[i];
 				if (d != 0) {
 					nonZeroMax = Double.valueOf(d);
 					break;
@@ -100,22 +106,25 @@ final class HorizontalBarChart {
 		return toString(DEFAULT_LIMIT_FOR_TEXT, ChartSymbol.DEFAULT);
 	}
 
+	/**
+	 * TODO - include header label if present
+	 */
 	String toString(final long limit, final String mark) {
 		final double[] data = this.data;
 		final int size = data.length;
 		final double max = this.max;
-		final CharSequence[] labels = this.labels;
+		final CharSequence[] dataLabels = this.dataLabels;
 
-		final int maxLabelLength = getMaxLabelLength(labels);
+		final int maxLabelLength = getMaxLabelLength(dataLabels);
 
 		final String NL = System.lineSeparator();
 
 		final StringBuilder buf = new StringBuilder();
 
 		for (int i = 0; i < size; i++) {
-			final String label = Utils.getPaddedLabel(labels[i], maxLabelLength, false);
+			final String dataLabel = Utils.getPaddedLabel(dataLabels[i], maxLabelLength, false);
 
-			buf.append(label).append("  ");
+			buf.append(dataLabel).append("  ");
 
 			final long scaled = scale(limit, max, data[i]);
 			for (int k = 0; k < scaled; k++) {
@@ -142,36 +151,79 @@ final class HorizontalBarChart {
 	}
 
 	private String toSVG(final int maxLineLength, final boolean useColorCoding) {
+		
 		final double[] data = this.data;
 		final int size = data.length;
 		final Double nonZeroMin = this.nonZeroMin;
 		final double max = this.max;
 		final Double nonZeroMax = this.nonZeroMax;
-		final String[] labels = this.labels;
-
-		final String NL = System.lineSeparator();
-
-		final int LABEL_START_X = SVGConstants.LEFT_RIGHT_MARGIN;
+		final String[] dataLabels = this.dataLabels;
+		final String headerLabel = this.headerLabel;
+		
+		final boolean hasHeaderLabel = headerLabel != null;
 
 		final int SPACE_BETWEEN_LABEL_AND_LINE = 10;
-
-		final int maxLabelLength = getMaxLabelLength(labels);
-		final double maxLabelWidth = maxLabelLength * SVGConstants.MONOSPACE_FONT_WIDTH;
+		final String LABEL_FONT_FAMILY = SVGConstants.MONOSPACE_FONT_FAMILY;
+		final double LABEL_FONT_SIZE = SVGConstants.MONOSPACE_FONT_SIZE;
+		final double LABEL_FONT_WIDTH = SVGConstants.MONOSPACE_FONT_WIDTH;
+		final int LINE_GAP = SVGConstants.LINE_GAP;
+		final int LEFT_RIGHT_MARGIN = SVGConstants.LEFT_RIGHT_MARGIN;
+		final int LABEL_START_X = LEFT_RIGHT_MARGIN;
+		
+		final String NL = System.lineSeparator();
+		final String INDENT = "    ";
+		
+		final int maxLabelLength;
+		{
+			final int maxLen = getMaxLabelLength(dataLabels);
+			maxLabelLength = hasHeaderLabel ? getMaxLabelLength(headerLabel, maxLen) : maxLen;	
+		}
+		
+		final double maxLabelWidth = maxLabelLength * LABEL_FONT_WIDTH;
 		final double xLineStart = LABEL_START_X + maxLabelWidth + SPACE_BETWEEN_LABEL_AND_LINE;
-		final double boxWidth = xLineStart + maxLineLength + SVGConstants.LEFT_RIGHT_MARGIN;
-		final int boxHeight = (size + 1) * SVGConstants.LINE_GAP;
+		final double boxWidth = xLineStart + maxLineLength + LEFT_RIGHT_MARGIN;
 
-		final String indent1 = "  ";
-		final String indent2 = "    ";
+		final int boxHeight = (size + 1 + (hasHeaderLabel ? 2 : 0)) * LINE_GAP;
 
 		final StringBuilder svgLines = new StringBuilder();
 		svgLines.append("<g style=\"stroke:grey; stroke-width:5\">").append(NL);
 
 		final StringBuilder svgLabels = new StringBuilder();
-		svgLabels.append("<g fill=\"black\" style=\"font-family:").append(SVGConstants.MONOSPACE_FONT_FAMILY).append(";font-size:")
-				.append(SVGConstants.MONOSPACE_FONT_SIZE).append("px;\">").append(NL);
+		
+		svgLabels
+			.append("<g fill=\"black\" style=\"font-family:").append(LABEL_FONT_FAMILY)
+			.append(";font-size:").append(LABEL_FONT_SIZE).append("px;\">").append(NL);
 
-		for (int i = 0, y1 = SVGConstants.LINE_GAP; i < size; i++, y1 += SVGConstants.LINE_GAP) {
+		int y1 = LINE_GAP;
+
+		
+		if (hasHeaderLabel) {
+
+			{
+				// add header text
+
+				svgLabels.append(INDENT)
+				.append("<text x=\"").append(LABEL_START_X).append("\"")
+				.append(" y=\"").append(y1).append("\"").append(">")
+				.append(Utils.getPaddedLabel(headerLabel, maxLabelLength, true)).append("</text>").append(NL);
+
+				y1 += LINE_GAP;
+			}
+
+			{
+				// add separator
+
+				svgLabels.append(INDENT)
+				.append("<text x=\"").append(LABEL_START_X).append("\"")
+				.append(" y=\"").append(y1).append("\"").append(">")
+				.append(Utils.repeat("-", maxLabelLength)).append("</text>").append(NL);
+
+				y1 += LINE_GAP;
+			}
+		}
+
+		for (int i = 0; i < size; i++, y1 += LINE_GAP) {
+			
 			final double d = data[i];
 
 			final String[] lineAndLabelColor = useColorCoding ? getLineAndLabelColor(d, nonZeroMin, nonZeroMax) : null;
@@ -179,12 +231,12 @@ final class HorizontalBarChart {
 			final String labelColor = lineAndLabelColor == null ? null : lineAndLabelColor[1];
 
 			final long scaledLineLength = scale(maxLineLength, max, d);
-			final String label = Utils.getPaddedLabel(labels[i], maxLabelLength, true); 
+			final String dataLabel = Utils.getPaddedLabel(dataLabels[i], maxLabelLength, true); 
 																						
-			svgLines.append(indent2)
+			svgLines.append(INDENT)
 					.append("<line x1=\"").append(xLineStart).append("\"")
 					.append(" y1=\"").append(y1).append("\"")
-					.append(" x2=\"").append((xLineStart + scaledLineLength)).append("\"")
+					.append(" x2=\"").append(xLineStart + scaledLineLength).append("\"")
 					.append(" y2=\"").append(y1).append("\"");
 			
 			if (lineColor != null) {
@@ -193,14 +245,14 @@ final class HorizontalBarChart {
 			
 			svgLines.append("/>").append(NL);
 
-			svgLabels.append(indent2)
+			svgLabels.append(INDENT)
 					.append("<text x=\"").append(LABEL_START_X).append("\"")
 					.append(" y=\"").append(y1).append("\"");
 			
 			if (labelColor != null) {
 				svgLabels.append(" fill=\"").append(labelColor).append("\"");
 			}
-			svgLabels.append(">").append(label).append("</text>").append(NL);
+			svgLabels.append(">").append(dataLabel).append("</text>").append(NL);
 		}
 
 		svgLines.append("</g>");
@@ -208,11 +260,12 @@ final class HorizontalBarChart {
 
 		final String rect = "<rect width=\"" + boxWidth + "\" height=\"" + boxHeight + "\" style=\"fill:white;stroke:black;stroke-width:1\"/>" + NL;
 
-		final String svg = indent1 + "<svg width=\"" + boxWidth + "\" height=\"" + boxHeight + "\">" + NL + 
-							indent2 + rect + NL + 
-							svgLines + NL + 
-							svgLabels + NL + 
-							indent1 + "</svg>";
+		final String svg = 
+				"  <svg width=\"" + boxWidth + "\" height=\"" + boxHeight + "\">" + NL + 
+				INDENT + rect + NL + 
+				svgLines + NL + 
+				svgLabels + NL + 
+				"  </svg>";
 
 		return svg;
 	}
@@ -240,12 +293,13 @@ final class HorizontalBarChart {
 	private static int getMaxLabelLength(final CharSequence[] c) {
 		int padding = -1;
 		for (final CharSequence e : c) {
-			final int len = e == null ? 4 : e.length();
-
-			if (len > padding) {
-				padding = len;
-			}
+			padding = getMaxLabelLength(e, padding);
 		}
 		return padding;
+	}
+
+	private static int getMaxLabelLength(final CharSequence cs, int currentLength) {
+		final int len = cs == null ? 4 : cs.length();
+		return Math.max(currentLength, len);
 	}
 }

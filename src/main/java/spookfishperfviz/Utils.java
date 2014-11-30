@@ -35,6 +35,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Objects;
 import java.util.Scanner;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
@@ -798,15 +799,41 @@ final class Utils {
 	}
 
 	static String toDisplayString(final double value, final int precision, final boolean useGroupSeparator) {
-		
-		final StringBuilder format = new StringBuilder("%1$");
-	
-		if (useGroupSeparator) {
-			format.append(',');
+
+		final String result;
+
+		if (Double.isNaN(value)) {
+			result = String.valueOf(value);
+			
+		} else {
+
+			final StringBuilder format = new StringBuilder("%1$");
+
+			if (useGroupSeparator) {
+				format.append(',');
+			}
+
+			format.append('.').append(precision).append('f');
+
+			result = String.format(format.toString(), Double.valueOf(value));
 		}
-	
-		format.append('.').append(precision).append('f');
-	
-		return Double.isNaN(value) ? String.valueOf(value) : String.format(format.toString(), Double.valueOf(value));
+
+		return result;
+	}
+
+	static String repeat(final String str, final int n) {
+
+		Objects.requireNonNull(str);
+
+		if (n < 1) {
+			throw new IllegalArgumentException("n (" + n + ") is less than 1");
+		}
+
+		final StringBuilder b = new StringBuilder();
+
+		for (int i = 0; i < n; i++) {
+			b.append(str);
+		}
+		return b.toString();
 	}
 }

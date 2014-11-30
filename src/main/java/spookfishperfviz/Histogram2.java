@@ -129,10 +129,12 @@ final class Histogram2<C extends Comparable<C>> extends Histogram<C> {
 
 		for (int k = 0; k < size; k++) {
 			data[k] = entries[k].getValue().intValue();
-			labels[k] = labelMaker.createLabel(k);
+			labels[k] = labelMaker.getDataLabel(k);
 		}
+		
+		final String headerLabel = labelMaker.getHeaderLabel();
 
-		return HorizontalBarChart.create(data, labels);
+		return HorizontalBarChart.create(data, labels, headerLabel);
 	}
 
 	private static final class Interval<C extends Comparable<C>> implements Comparable<Interval<C>> {
@@ -225,12 +227,19 @@ final class Histogram2<C extends Comparable<C>> extends Histogram<C> {
 
 	private static final class LabelMaker<C extends Comparable<C>> {
 		
+		private static final String INTERVAL_HEADER = "Interval";
+		private static final String FREQUENCY_HEADER = "Count";
+		private static final String PERCENTAGE_HEADER = "%";
+		private static final String CUMULATIVE_PERCENTAGE_HEADER = "Sum of %";
+		
 		private final Entry<Interval<C>, Integer>[] table;
 		private final int intrvlpadding;
 		private final int freqPadding;
 		private final double[] percs;
 		private final double[] cumulatives;
 		private final Function<C, String> dataPointFormatter;
+		private final String labelStringFormat;
+		private final String headerLabel;
 
 		LabelMaker(final Entry<Interval<C>, Integer>[] entries, final Function<C, String> dataPointFormatter) {
 			
@@ -242,9 +251,15 @@ final class Histogram2<C extends Comparable<C>> extends Histogram<C> {
 				final Integer frequency = row.getValue();
 
 				sumOfFrequencies += frequency.intValue();
-				iPadding = Math.max(iPadding, /* String.valueOf(interval) */interval.toString(dataPointFormatter).length());
+				iPadding = Math.max(iPadding, interval.toString(dataPointFormatter).length());
 				fPadding = Math.max(fPadding, String.valueOf(frequency).length());
 			}
+
+			iPadding = Math.max(iPadding, INTERVAL_HEADER.length());
+			fPadding = Math.max(fPadding, FREQUENCY_HEADER.length());
+			
+			final int pPadding = Math.max(7 /*xxx.xx%*/, PERCENTAGE_HEADER.length());
+			final int cPadding = Math.max(7 /*xxx.xx%*/, CUMULATIVE_PERCENTAGE_HEADER.length());
 
 			final int size = entries.length;
 
@@ -262,6 +277,8 @@ final class Histogram2<C extends Comparable<C>> extends Histogram<C> {
 				p[i] = perc;
 				c[i] = cumulative;
 			}
+			
+			
 
 			this.table = entries;
 			this.percs = p;
@@ -269,9 +286,22 @@ final class Histogram2<C extends Comparable<C>> extends Histogram<C> {
 			this.intrvlpadding = iPadding;
 			this.freqPadding = fPadding;
 			this.dataPointFormatter = dataPointFormatter;
+			
+			this.labelStringFormat = 
+					"%1$" + this.intrvlpadding + "s" +  "   " + 
+					"%2$" + this.freqPadding + "s" + "   " + 
+					"%3$" + pPadding + "s" + "   " +
+					"%4$" + cPadding + "s";
+			
+			this.headerLabel = String.format(this.labelStringFormat, 
+												INTERVAL_HEADER, 
+												FREQUENCY_HEADER, 
+												PERCENTAGE_HEADER, 
+												CUMULATIVE_PERCENTAGE_HEADER);
 		}
 
-		String createLabel(final int index) {
+		String getDataLabel(final int index) {
+			
 			final Entry<Interval<C>, Integer> row = this.table[index];
 			final Interval<C> interval = row.getKey();
 			final Integer frequency = row.getValue();
@@ -279,17 +309,15 @@ final class Histogram2<C extends Comparable<C>> extends Histogram<C> {
 			final double perc = this.percs[index];
 			final double cumulative = this.cumulatives[index];
 
-			final StringBuilder label = new StringBuilder();
+			return String.format(this.labelStringFormat, 
+					interval.toString(this.dataPointFormatter), 
+					frequency, 
+					Utils.toDisplayString(perc, 2, false) + '%', 
+					Utils.toDisplayString(cumulative, 2, false) + '%');
+		}
 
-			label.append(String.format("%1$" + this.intrvlpadding + "s", interval.toString(this.dataPointFormatter)));
-			label.append("  ");
-			label.append(String.format("%1$" + this.freqPadding + "s", frequency));
-			label.append("  ");
-			label.append(String.format("%1$7.2f%%", Double.valueOf(perc)));
-			label.append("  ");
-			label.append(String.format("%1$7.2f%%", Double.valueOf(cumulative)));
-
-			return label.toString();
+		String getHeaderLabel() {
+			return this.headerLabel;
 		}
 	}
 }
