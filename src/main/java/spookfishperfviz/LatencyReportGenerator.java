@@ -73,7 +73,7 @@ public final class LatencyReportGenerator {
 
 		final double[] histogramIntervalPoints = options.getMandatory("histogramIntervalPoints", double[].class);
 		final double[] percentilePoints = options.getMandatory("percentilePoints", double[].class);
-		final Integer heatMapMaxIntervalPoints = options.getMandatory("heatMapMaxIntervalPoints", int.class);
+		final Integer heatMapMaxIntervalPoints = options.getOptional("heatMapMaxIntervalPoints", Integer.class, null);
 
 		final HeatMapColorScheme heapMapColorScheme = options.getOptional("heapMapColorScheme", HeatMapColorScheme.class, HeatMapColorScheme.DEFAULT);
 
@@ -87,7 +87,7 @@ public final class LatencyReportGenerator {
 		try (final Reader fr = new FileReader(inFile); final Reader source = new BufferedReader(fr);) {
 			
 			path = generateReport(source, parser, latencyUnit, histogramIntervalPoints, percentilePoints, 
-									heatMapMaxIntervalPoints.intValue(), heatMapSingleAreaWidth, heapMapColorScheme, outFile);
+									heatMapMaxIntervalPoints, heatMapSingleAreaWidth, heapMapColorScheme, outFile);
 		}
 
 		System.out.println("Report generated at <" + path + ">");
@@ -98,7 +98,7 @@ public final class LatencyReportGenerator {
 										final TimeUnit latencyUnit,
 										final double[] intervalPointsForLatencyHistogram, 
 										final double[] percentileKeys, 
-										final int maxIntervalPointsForLatencyDensity,
+										final Integer maxIntervalPointsForLatencyDensity,
 										final double heatMapSingleAreaWidth, 
 										final HeatMapColorScheme heapMapColorScheme, 
 										final String outputFilePath) throws IOException {
@@ -106,8 +106,9 @@ public final class LatencyReportGenerator {
 		final LatencyStatsToHtmlFunc latencyStatsToHtmlFunc = new LatencyStatsToHtmlFunc() {
 			@Override
 			public String[] toHtml(final LatencyStats stats) {
-				return stats.toHtml(intervalPointsForLatencyHistogram, percentileKeys, maxIntervalPointsForLatencyDensity,
-						heatMapSingleAreaWidth, heapMapColorScheme);
+
+				final TimeSeriesLatencyDensity density = TimeSeriesLatencyDensity.create(stats.getLatencies(), stats.getTimestamps(), maxIntervalPointsForLatencyDensity);
+				return stats.toHtml(intervalPointsForLatencyHistogram, percentileKeys, density, heatMapSingleAreaWidth, heapMapColorScheme);
 			}
 		};
 
@@ -121,7 +122,7 @@ public final class LatencyReportGenerator {
 										final double[] percentileKeys, 
 										final double minIntervalPointForLatencyDensity, 
 										final double maxIntervalPointForLatencyDensity, 
-										final int maxIntervalPointsForLatencyDensity, 
+										final Integer maxIntervalPointsForLatencyDensity, 
 										final double heatMapSingleAreaWidth, 
 										final HeatMapColorScheme heapMapColorScheme, 
 										final String outputFilePath) throws IOException {
@@ -129,8 +130,9 @@ public final class LatencyReportGenerator {
 		final LatencyStatsToHtmlFunc latencyStatsToHtmlFunc = new LatencyStatsToHtmlFunc() {
 			@Override
 			public String[] toHtml(final LatencyStats stats) {
-				return stats.toHtml(intervalPointsForLatencyHistogram, percentileKeys, minIntervalPointForLatencyDensity,
-						maxIntervalPointForLatencyDensity, maxIntervalPointsForLatencyDensity, heatMapSingleAreaWidth, heapMapColorScheme);
+
+				final TimeSeriesLatencyDensity density = TimeSeriesLatencyDensity.create(stats.getLatencies(), stats.getTimestamps(), minIntervalPointForLatencyDensity, maxIntervalPointForLatencyDensity, maxIntervalPointsForLatencyDensity);
+				return stats.toHtml(intervalPointsForLatencyHistogram, percentileKeys, density, heatMapSingleAreaWidth, heapMapColorScheme);
 			}
 		};
 
@@ -802,74 +804,12 @@ public final class LatencyReportGenerator {
 		}
 
 		public String[] toHtml(	final double[] intervalPointsForLatencyHistogram, 
-								final double[] percentileKeys, 
-								final int maxIntervalPointsForLatencyDensity, 
-								final double heatMapSingleAreaWidth, 
-								final HeatMapColorScheme heatMapColorScheme) {
-			
-			final double[] minMax = Utils.minMax(this.latencies);
-			final double minIntervalPoint = minMax[0];
-			final double maxIntervalPoint = minMax[1];
+				final double[] percentileKeys, 
+				final TimeSeriesLatencyDensity density, 
+				final double heatMapSingleAreaWidth, 
+				final HeatMapColorScheme heapMapColorScheme) {
 
-			final double[] intervalPointsForLatencyDensity = 
-					createIntervalPoints(minIntervalPoint, maxIntervalPoint, maxIntervalPointsForLatencyDensity);
-
-			return toHtml(intervalPointsForLatencyHistogram, percentileKeys, intervalPointsForLatencyDensity, heatMapSingleAreaWidth, heatMapColorScheme);
-		}
-
-		private static double[] createIntervalPoints(final double minIntervalPoint, final double maxIntervalPoint, final int maxIntervalPoints) {
-
-			final double[] adjustedMinMax = Utils.getAdjustedMinMax(minIntervalPoint, maxIntervalPoint);
-			final double adjustedMin = adjustedMinMax[0];
-			final double adjustedMax = adjustedMinMax[1];
-
-			final int nIntervalPointsForLatencyDensity = Math.min(maxIntervalPoints, (int) Math.ceil(adjustedMax - adjustedMin));
-			return Utils.createIntervalPoints(adjustedMin, adjustedMax, nIntervalPointsForLatencyDensity);
-		}
-
-		public String[] toHtml(	final double[] intervalPointsForLatencyHistogram, 
-								final double[] percentileKeys, 
-								final double minIntervalPointForLatencyDensity, 
-								final double maxIntervalPointForLatencyDensity, 
-								final int maxIntervalPointsForLatencyDensity, 
-								final double heatMapSingleAreaWidth,
-								final HeatMapColorScheme heatMapColorScheme) {
-			
-			if (minIntervalPointForLatencyDensity > maxIntervalPointForLatencyDensity) {
-				throw new IllegalArgumentException("min = <" + minIntervalPointForLatencyDensity + ">, max = <" + maxIntervalPointForLatencyDensity + ">");
-			}
-
-			final double[] minMax = Utils.minMax(this.latencies);
-			final double minLatency = minMax[0];
-			final double maxLatency = minMax[1];
-
-			final double minIntervalPoint;
-			final double maxIntervalPoint;
-
-			if ((maxIntervalPointForLatencyDensity < minLatency) || (minIntervalPointForLatencyDensity > maxLatency)) {
-				minIntervalPoint = minIntervalPointForLatencyDensity;
-				maxIntervalPoint = maxIntervalPointForLatencyDensity;
-			} else {
-				minIntervalPoint = Math.max(minLatency, minIntervalPointForLatencyDensity);
-				maxIntervalPoint = Math.min(maxLatency, maxIntervalPointForLatencyDensity);
-			}
-
-			final double[] intervalPointsForLatencyDensity = 
-					createIntervalPoints(minIntervalPoint, maxIntervalPoint, maxIntervalPointsForLatencyDensity);
-
-			return toHtml(intervalPointsForLatencyHistogram, percentileKeys, intervalPointsForLatencyDensity, heatMapSingleAreaWidth, heatMapColorScheme);
-		}
-
-		public String[] toHtml(	final double[] intervalPointsForLatencyHistogram, 
-								final double[] percentileKeys, 
-								final double[] intervalPointsForLatencyDensity, 
-								final double heatMapSingleAreaWidth, 
-								final HeatMapColorScheme heapMapColorScheme) {
-			
 			final String eventType = this.eventType;
-
-			final TimeSeriesLatencyDensity density = 
-					TimeSeriesLatencyDensity.create(this.latencies, this.timestamps, intervalPointsForLatencyDensity);
 
 			final HeatMapSVG heatMapSVG = density.getHeatMapSVG(this.latencyUnit, heatMapSingleAreaWidth, heapMapColorScheme);
 			final String trxCountBarChartSVG = 

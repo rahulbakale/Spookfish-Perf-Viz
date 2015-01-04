@@ -29,8 +29,8 @@ final class BadOptionsException extends Exception {
 		return new BadOptionsException(message + ": args[" + argNum + "] = <" + args[argNum] + ">");
 	}
 
-	static BadOptionsException noSuchOption(final String optionName) {
-		return new BadOptionsException("Option <" + optionName + "> does not exist");
+	static BadOptionsException optionNotSpecified(final String optionName) {
+		return new BadOptionsException("Option <" + optionName + "> is not specified");
 	}
 
 	static BadOptionsException valueNotSpecified(final String optionName) {

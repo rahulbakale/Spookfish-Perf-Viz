@@ -501,14 +501,6 @@ final class Utils {
 		return createIntervalPoints(min, max, nIntervalPoints);
 	}
 
-	static double[] createIntervalPoints(final double[] data, final int nIntervalPoints) {
-		final double[] minMax = minMax(data);
-		final double min = minMax[0];
-		final double max = minMax[1];
-
-		return createIntervalPoints(min, max, nIntervalPoints);
-	}
-
 	static double[] getAdjustedMinMax(final double min, final double max) {
 
 		// TODO - also adjust for values less than one

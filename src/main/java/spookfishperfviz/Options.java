@@ -99,29 +99,22 @@ final class Options {
 
 	<T> T getOptional(final String optionName, final Class<T> valueType, final T defaultValue) throws BadOptionsException {
 
-		final Optional<String> optional = getOptional(optionName);
-		return optional.hasValue() ? parse(optionName, optional.get(), valueType) : defaultValue;
+		final Optional<String> optional = this.options.get(optionName);
+		return (optional != null && optional.hasValue()) ? parse(optionName, optional.get(), valueType) : defaultValue;
 	}
 
 	private String getMandatory(final String optionName) throws BadOptionsException {
 
-		final Optional<String> optional = getOptional(optionName);
-
-		if (optional.hasValue()) {
-			return optional.get();
-		}
-
-		throw BadOptionsException.illegalValue(optionName, "Value is null.", null);
-	}
-
-	private Optional<String> getOptional(final String optionName) throws BadOptionsException {
-
 		final Optional<String> optional = this.options.get(optionName);
 
 		if (optional == null) {
-			throw BadOptionsException.noSuchOption(optionName);
+			throw BadOptionsException.optionNotSpecified(optionName);
 		}
 
-		return optional;
+		if (!optional.hasValue()) {
+			throw BadOptionsException.illegalValue(optionName, "Value is null.", null);
+		}
+
+		return optional.get();
 	}
 }

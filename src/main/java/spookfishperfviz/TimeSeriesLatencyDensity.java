@@ -39,12 +39,14 @@ import spookfishperfviz.Density.IndexedDataPoint;
  */
 final class TimeSeriesLatencyDensity {
 	
-	private static final int DEFAULT_HEAT_MAP_SINGLE_AREA_HEIGHT = 20;
+	private static final int DEFAULT_HEAT_MAP_SINGLE_AREA_HEIGHT = 10;
 
 	/**
 	 * TODO - take this as input parameter
 	 */
-	private static final double MAX_HEAT_MAP_HEIGHT = 400;
+	private static final int MAX_HEAT_MAP_HEIGHT = 400;
+
+	private static final int DEFAULT_MAX_INTERBAL_POINTS_FOR_LATENCY_DENSITY = MAX_HEAT_MAP_HEIGHT / DEFAULT_HEAT_MAP_SINGLE_AREA_HEIGHT;
 
 	private static final double X_AXIS_LABEL_FONT_SIZE = 10; // TODO - add to SVGConstants.
 	private static final String X_AXIS_LABEL_FONT_FAMILY = SVGConstants.MONOSPACE_FONT_FAMILY;
@@ -71,17 +73,72 @@ final class TimeSeriesLatencyDensity {
 		}
 	};
 
-	static TimeSeriesLatencyDensity create(final double[] latencies, final long[] timestamps, final double[] latencyIntervalPoints) {
-		return new TimeSeriesLatencyDensity(latencies, timestamps, Utils.toHashSet(latencyIntervalPoints));
+	
+
+	static TimeSeriesLatencyDensity create(	final double[] latencies, 
+											final long[] timestamps, 
+											final Integer maxIntervalPointsForLatencyDensity) {
+		
+		final double[] minMax = Utils.minMax(latencies);
+		final double minIntervalPoint = minMax[0];
+		final double maxIntervalPoint = minMax[1];
+
+		return create0(latencies, timestamps, minIntervalPoint, maxIntervalPoint, maxIntervalPointsForLatencyDensity);
 	}
 
-	static TimeSeriesLatencyDensity create(final double[] latencies, final long[] timestamps, final int nIntervalPoints) {
-		return create(latencies, timestamps, Utils.createIntervalPoints(latencies, nIntervalPoints));
-	}
+	static TimeSeriesLatencyDensity create(	final double[] latencies, 
+											final long[] timestamps, 
+											final double minIntervalPointForLatencyDensity, 
+											final double maxIntervalPointForLatencyDensity, 
+											final Integer maxIntervalPointsForLatencyDensity) {
+		
+		
+		if (minIntervalPointForLatencyDensity > maxIntervalPointForLatencyDensity) {
+			throw new IllegalArgumentException("min = <" + minIntervalPointForLatencyDensity + ">, max = <" + maxIntervalPointForLatencyDensity + ">");
+		}
 
-	static TimeSeriesLatencyDensity create(final double[] latencies, final long[] timestamps, final double minIntervalPoint,
-			final double maxIntervalPoint, final int nIntervalPoints) {
-		return create(latencies, timestamps, Utils.createIntervalPoints(minIntervalPoint, maxIntervalPoint, nIntervalPoints));
+		final double[] minMax = Utils.minMax(latencies);
+		final double minLatency = minMax[0];
+		final double maxLatency = minMax[1];
+
+		final double minIntervalPoint;
+		final double maxIntervalPoint;
+
+		if ((maxIntervalPointForLatencyDensity < minLatency) || (minIntervalPointForLatencyDensity > maxLatency)) {
+			minIntervalPoint = minIntervalPointForLatencyDensity;
+			maxIntervalPoint = maxIntervalPointForLatencyDensity;
+		} else {
+			minIntervalPoint = Math.max(minLatency, minIntervalPointForLatencyDensity);
+			maxIntervalPoint = Math.min(maxLatency, maxIntervalPointForLatencyDensity);
+		}
+
+		return create0(latencies, timestamps, minIntervalPoint, maxIntervalPoint, maxIntervalPointsForLatencyDensity);
+	}
+	
+	private static TimeSeriesLatencyDensity create0(final double[] latencies, 
+													final long[] timestamps, 
+													final double adjustedMinIntervalPointForLatencyDensity,
+													final double adjustedMaxIntervalPointForLatencyDensity, 
+													final Integer maxIntervalPointsForLatencyDensity) {
+		
+		final int maxIntervalPoints = 
+				maxIntervalPointsForLatencyDensity == null ? 
+						DEFAULT_MAX_INTERBAL_POINTS_FOR_LATENCY_DENSITY : maxIntervalPointsForLatencyDensity.intValue();
+		
+		final double[] intervalPointsForLatencyDensity = 
+				createIntervalPoints(adjustedMinIntervalPointForLatencyDensity, adjustedMaxIntervalPointForLatencyDensity, maxIntervalPoints);
+		
+		return new TimeSeriesLatencyDensity(latencies, timestamps, intervalPointsForLatencyDensity);
+	}
+	
+	private static double[] createIntervalPoints(final double minIntervalPoint, final double maxIntervalPoint, final int maxIntervalPoints) {
+
+		final double[] adjustedMinMax = Utils.getAdjustedMinMax(minIntervalPoint, maxIntervalPoint);
+		final double adjustedMin = adjustedMinMax[0];
+		final double adjustedMax = adjustedMinMax[1];
+
+		final int nIntervalPointsForLatencyDensity = Math.min(maxIntervalPoints, (int) Math.ceil(adjustedMax - adjustedMin));
+		return Utils.createIntervalPoints(adjustedMin, adjustedMax, nIntervalPointsForLatencyDensity);
 	}
 
 	/**
@@ -397,8 +454,8 @@ final class TimeSeriesLatencyDensity {
 	private final Density<Double, Long, Long> density;
 	private final int defaultTimeLabelSkipCount;
 
-	private TimeSeriesLatencyDensity(final double[] latencies, final long[] timestamps, final Set<Double> responseTimeIntervalPoints) {
-		this(latencies, timestamps, null, responseTimeIntervalPoints);
+	private TimeSeriesLatencyDensity(final double[] latencies, final long[] timestamps, final double[] responseTimeIntervalPoints) {
+		this(latencies, timestamps, null, Utils.toHashSet(responseTimeIntervalPoints));
 	}
 
 	private TimeSeriesLatencyDensity(final double[] latencies, 
