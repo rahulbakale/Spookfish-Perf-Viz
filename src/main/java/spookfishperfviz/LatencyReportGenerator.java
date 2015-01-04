@@ -93,25 +93,6 @@ public final class LatencyReportGenerator {
 		System.out.println("Report generated at <" + path + ">");
 	}
 
-	static Path generateReport(	final Reader source,
-								final RecordParser parser, 
-								final TimeUnit latencyUnit, 
-								final double[] intervalPointsForLatencyHistogram, 
-								final double[] percentileKeys, 
-								final double[] intervalPointsForLatencyDensity, 
-								final HeatMapColorScheme heapMapColorScheme, 
-								final String outputFilePath) throws IOException {
-		
-		final LatencyStatsToHtmlFunc latencyStatsToHtmlFunc = new LatencyStatsToHtmlFunc() {
-			@Override
-			public String[] toHtml(final LatencyStats stats) {
-				return stats.toHtml(intervalPointsForLatencyHistogram, percentileKeys, intervalPointsForLatencyDensity, 20, heapMapColorScheme);
-			}
-		};
-
-		return generateReport(source, parser, latencyUnit, latencyStatsToHtmlFunc, outputFilePath);
-	}
-
 	public static Path generateReport(	final Reader source,
 										final RecordParser parser, 
 										final TimeUnit latencyUnit,
