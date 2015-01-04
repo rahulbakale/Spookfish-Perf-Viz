@@ -26,7 +26,6 @@ import java.util.List;
 import java.util.NavigableSet;
 import java.util.Objects;
 import java.util.Set;
-import java.util.SortedSet;
 import java.util.concurrent.TimeUnit;
 
 import spookfishperfviz.Density.IndexedDataPoint;
@@ -65,6 +64,13 @@ final class TimeSeriesLatencyDensity {
 			return String.format("%1$tH:%1$tM%n%1$td/%1$tm%n%1$tY", time);
 		}
 	};
+	
+	private static final Function<Long, String> TIMESTAMP_TOOLTIP_MAKER = new Function<Long, String>() {
+		@Override
+		public String apply(final Long time) {
+			return String.format("%1$td/%1$tm/%1$tY %1$tH:%1$tM", time);
+		}
+	};
 
 	private static final Function<IndexedDataPoint<Double>, String> Y_AXIS_LABEL_MAKER = new Function<Density.IndexedDataPoint<Double>, String>() {
 		@Override
@@ -73,7 +79,6 @@ final class TimeSeriesLatencyDensity {
 		}
 	};
 
-	
 
 	static TimeSeriesLatencyDensity create(	final double[] latencies, 
 											final long[] timestamps, 
@@ -141,316 +146,7 @@ final class TimeSeriesLatencyDensity {
 		return Utils.createIntervalPoints(adjustedMin, adjustedMax, nIntervalPointsForLatencyDensity);
 	}
 
-	/**
-	 * TODO - check if some code can be moved to {@linkplain Density}
-	 */
-	private static String[][] getColoredHeatMap(final Density<Double, Long, Long> density, final HeatMapColorScheme colorScheme) {
-
-		final Long[][] matrix = density.getMatrix();
-
-		final int rowCount = matrix.length;
-		final int columnCount = matrix[0].length;
-
-		final double min = 1;
-		long max = Long.MIN_VALUE;
-
-		for (int r = 0; r < rowCount; r++) {
-			for (int c = 0; c < columnCount; c++) {
-				final long val = matrix[r][c].longValue();
-
-				if (val > max) {
-					max = val;
-				}
-			}
-		}
-
-		final String[] colors = colorScheme.getForegroundColors();
-		final int colorCount = colors.length;
-		final double d = ((max - min) + 1) / colorCount;
-		
-		final String colorForZeroVal = colorScheme.getBackgroundColor();
-
-		final String[][] colorMap = new String[rowCount][columnCount];
-
-		for (int r = 0; r < rowCount; r++) {
-			for (int c = 0; c < columnCount; c++) {
-				final long val = matrix[r][c].longValue();
-
-				final String color;
-
-				if (val == 0) {
-					color = colorForZeroVal;
-				} else {
-					final double i = Math.floor((val - 1) / d);
-
-					if ((i > Integer.MAX_VALUE) || (i < Integer.MIN_VALUE)) {
-						throw new RuntimeException("Internal error: " + i);
-					}
-
-					final int colorIndex = (int) i;
-					color = colors[colorIndex];
-				}
-
-				colorMap[r][c] = color;
-			}
-		}
-
-		return colorMap;
-	}
-
-	/**
-	 * TODO - re-factor common code from this and BarChart.
-	 */
-	private static HeatMapSVG getHeatMapSVG(final String[][] heatMap, final HeatMapColorScheme colorScheme,
-			final SortedSet<IndexedDataPoint<Double>> rowIntervalPoints, final SortedSet<IndexedDataPoint<Long>> columnIntervalPoints,
-			final int xAxisLabelSkipCount, final TimeUnit yAxisUnit, final double heatMapSingleAreaWidth) {
-
-		final int rowCount = heatMap.length;
-		final int columnCount = heatMap[0].length;
-
-		final String NL = System.lineSeparator();
-		final int START_X = SVGConstants.LEFT_RIGHT_MARGIN;
-		final int START_Y = SVGConstants.TOP_DOWN_MARGIN;
-
-		final int TICK_LENGTH = 10;
-		final int SPACE_BETWEEN_LABEL_AND_TICK = 10;
-		final int SPACE_BETWEEN_TITLE_AND_LABEL = 10;
-
-		final String yAxisTitle = "Latency" + " (" + Utils.toShortForm(yAxisUnit) + ")";
-		final double Y_AXIS_TITLE_FONT_SIZE = SVGConstants.MONOSPACE_FONT_SIZE;
-		final String Y_AXIS_TITLE_FONT_FAMILY = SVGConstants.MONOSPACE_FONT_FAMILY;
-		final double Y_AXIS_TITLE_START_X = START_X;
-		final double Y_AXIS_TITLE_END_X = Y_AXIS_TITLE_START_X + SVGConstants.MONOSPACE_FONT_SIZE;
-
-		final double Y_AXIS_LABEL_FONT_SIZE = SVGConstants.MONOSPACE_FONT_SIZE;
-		final String Y_AXIS_LABEL_FONT_FAMILY = SVGConstants.MONOSPACE_FONT_FAMILY;
-		final double Y_AXIS_LABEL_START_X = Y_AXIS_TITLE_END_X + SPACE_BETWEEN_TITLE_AND_LABEL;
-
-		final String X_AXIS_TITLE = "Time";
-		final double X_AXIS_TITLE_FONT_SIZE = SVGConstants.MONOSPACE_FONT_SIZE;
-		final String X_AXIS_TITLE_FONT_FAMILY = SVGConstants.MONOSPACE_FONT_FAMILY;
-
-		final double BOX_START_Y = START_Y;
-
-		final ArrayList<String> yAxisLabels = 
-				forEach(reverse(rowIntervalPoints, new ArrayListSupplier<IndexedDataPoint<Double>>()), Y_AXIS_LABEL_MAKER, new ArrayListSupplier<String>());
-		
-		final int yAxisMaxLabelLength = 
-				Collections.max(forEach(yAxisLabels, CharSeqLengthFunction.INSTANCE, new ArrayListSupplier<Integer>())).intValue();
-		
-		final ArrayList<String> yAxisPaddedLabels = 
-				Utils.getPaddedLabels(yAxisLabels, yAxisMaxLabelLength, new ArrayListSupplier<String>(), true);
-
-		final double yAxisMaxLabelWidth = yAxisMaxLabelLength * SVGConstants.MONOSPACE_FONT_WIDTH;
-
-		final double yAxisMajorTickStartX = Y_AXIS_LABEL_START_X + yAxisMaxLabelWidth + SPACE_BETWEEN_LABEL_AND_TICK;
-		final double yAxisTickEndX = yAxisMajorTickStartX + TICK_LENGTH;
-
-		final double heatMapSingleAreaHeight = Math.min(MAX_HEAT_MAP_HEIGHT / rowCount, DEFAULT_HEAT_MAP_SINGLE_AREA_HEIGHT);
-
-		final double heatMapHeight = rowCount * heatMapSingleAreaHeight;
-		final double heatMapWidth = columnCount * heatMapSingleAreaWidth;
-
-		final double heatMapBoxStartX = yAxisTickEndX;
-		final double heatMapStartX = heatMapBoxStartX + /* gutter */heatMapSingleAreaWidth;
-		final double heatMapStartY = BOX_START_Y + /* gutter */DEFAULT_HEAT_MAP_SINGLE_AREA_HEIGHT;
-		final double heatMapBoxEndX = heatMapStartX + heatMapWidth + /* gutter */heatMapSingleAreaWidth;
-		final double heatMapBoxEndY = heatMapStartY + heatMapHeight + /* gutter */DEFAULT_HEAT_MAP_SINGLE_AREA_HEIGHT;
-		final double heatMapBoxHeight = heatMapBoxEndY - BOX_START_Y;
-		final double heatMapBoxWidth = heatMapBoxEndX - heatMapBoxStartX;
-
-		final double yAxisTitleStartY = BOX_START_Y + ((heatMapBoxHeight / 2.0) - (Y_AXIS_TITLE_FONT_SIZE / 2.0));
-
-		final double xAxisTickStartY = heatMapBoxEndY;
-		final double xAxisMajorTickEndY = xAxisTickStartY + TICK_LENGTH;
-		final double xAxisMinorTickEndY = xAxisTickStartY + (TICK_LENGTH / 2.0);
-
-		// TODO - check if cast to int is OK
-		final int yAxisLabelSkipCount = (int) (DEFAULT_HEAT_MAP_SINGLE_AREA_HEIGHT / heatMapSingleAreaHeight);
-
-		final double xAxisLabelStartY = xAxisMajorTickEndY + SPACE_BETWEEN_LABEL_AND_TICK;
-
-		final StringBuilder yAxisTitleSVG;
-		{
-			yAxisTitleSVG = new StringBuilder();
-
-			yAxisTitleSVG.append("<text ");
-			yAxisTitleSVG.append("style=\"");
-			yAxisTitleSVG.append("font-family:").append(Y_AXIS_TITLE_FONT_FAMILY).append(";");
-
-			yAxisTitleSVG.append("font-size:").append(Y_AXIS_TITLE_FONT_SIZE).append("px;");
-			yAxisTitleSVG.append("text-anchor: middle;"); // related to rotation of the title
-			yAxisTitleSVG.append("dominant-baseline: middle;"); // related to rotation of the title
-			yAxisTitleSVG.append("\"");
-			yAxisTitleSVG.append(" x=\"").append(Y_AXIS_TITLE_START_X).append("\"");
-			yAxisTitleSVG.append(" y=\"").append(yAxisTitleStartY).append("\"");
-			yAxisTitleSVG.append(" transform=\"rotate(-90,").append(Y_AXIS_TITLE_START_X).append(",").append(yAxisTitleStartY).append(")\"");
-			yAxisTitleSVG.append(">");
-			yAxisTitleSVG.append(yAxisTitle);
-			yAxisTitleSVG.append("</text>");
-		}
-
-		final StringBuilder yAxisLabelsSVG;
-		final StringBuilder yAxisTicksSVG;
-		{
-			yAxisLabelsSVG = new StringBuilder();
-			yAxisTicksSVG = new StringBuilder();
-
-			yAxisLabelsSVG.append("<g style=\"font-family:").append(Y_AXIS_LABEL_FONT_FAMILY).append(";font-size:").append(Y_AXIS_LABEL_FONT_SIZE)
-					.append("px;\">").append(NL);
-			yAxisTicksSVG.append("<g style=\"stroke:black; stroke-width:1\">").append(NL);
-
-			double yAxisLabelStartY = heatMapStartY; // BOX_START_Y;
-
-			for (int i = 0; i <= rowCount; i++) {
-
-				final boolean skipLabel = Utils.skipLabel(i, rowCount, yAxisLabelSkipCount);
-
-				if (skipLabel == false) {
-					yAxisLabelsSVG.append("<text style=\"dominant-baseline: central;\" x=\"").append(Y_AXIS_LABEL_START_X).append("\" y=\"")
-							.append(yAxisLabelStartY).append("\">").append(yAxisPaddedLabels.get(i)).append("</text>").append(NL);
-					
-					yAxisTicksSVG
-						.append("<line x1=\"").append(yAxisMajorTickStartX)
-						.append("\" y1=\"").append(yAxisLabelStartY)
-						.append("\" x2=\"").append(yAxisTickEndX)
-						.append("\" y2=\"").append(yAxisLabelStartY)
-						.append("\"/>").append(NL);
-				}
-
-				yAxisLabelStartY += heatMapSingleAreaHeight;
-			}
-
-			yAxisLabelsSVG.append("</g>");
-			yAxisTicksSVG.append("</g>");
-		}
-
-		final double xAxisLabelEndY;
-		final StringBuilder xAxisTicksSVG;
-		final StringBuilder xAxisLabelsSVG;
-		{
-			final ArrayList<IndexedDataPoint<Long>> points = new ArrayList<>(columnIntervalPoints);
-
-			xAxisTicksSVG = new StringBuilder();
-			xAxisLabelsSVG = new StringBuilder();
-
-			xAxisTicksSVG.append("<g style=\"stroke:black; stroke-width:1\">").append(NL);
-			xAxisLabelsSVG.append("<g style=\"font-family:").append(X_AXIS_LABEL_FONT_FAMILY).append(";font-size:").append(X_AXIS_LABEL_FONT_SIZE).append("px;\">").append(NL);
-
-			double x = heatMapStartX; // boxStartX;
-
-			int maxXAxisLabelPartCount = Integer.MIN_VALUE;
-			final double fontSize = X_AXIS_LABEL_FONT_SIZE;
-
-			for (int i = 0; i <= columnCount; i++) {
-				final boolean skipLabel = Utils.skipLabel(i, columnCount, xAxisLabelSkipCount);
-
-				final double xAxisTickEndY = skipLabel ? xAxisMinorTickEndY : xAxisMajorTickEndY;
-
-				xAxisTicksSVG.append("<line x1=\"").append(x).append("\" y1=\"").append(xAxisTickStartY).append("\" x2=\"").append(x)
-						.append("\" y2=\"").append(xAxisTickEndY).append("\"/>").append(NL);
-
-				if (skipLabel == false) {
-					final String multiLineLabel = points.get(i).toString(TIMESTAMP_LABEL_MAKER);
-
-					final MultiSpanSVGText label = Utils.createMultiSpanSVGText(multiLineLabel, x, xAxisLabelStartY, fontSize, null);
-
-					xAxisLabelsSVG.append(label.getSvg());
-
-					maxXAxisLabelPartCount = Math.max(label.getSpanCount(), maxXAxisLabelPartCount);
-				}
-
-				x += heatMapSingleAreaWidth;
-			}
-
-			xAxisLabelEndY = xAxisLabelStartY + (maxXAxisLabelPartCount * fontSize);
-
-			xAxisTicksSVG.append("</g>");
-			xAxisLabelsSVG.append("</g>");
-		}
-
-		final double xAxisTitleEndY;
-		final StringBuilder xAxisTitleSVG;
-		{
-			final double xAxisTitleStartY = xAxisLabelEndY + SPACE_BETWEEN_TITLE_AND_LABEL;
-			xAxisTitleEndY = xAxisTitleStartY + X_AXIS_TITLE_FONT_SIZE;
-
-			xAxisTitleSVG = new StringBuilder();
-
-			xAxisTitleSVG.append("<text ");
-			xAxisTitleSVG.append("style=\"");
-			xAxisTitleSVG.append("font-family:").append(X_AXIS_TITLE_FONT_FAMILY).append(";");
-			xAxisTitleSVG.append("font-size:").append(X_AXIS_TITLE_FONT_SIZE).append("px;");
-			xAxisTitleSVG.append("text-anchor: middle;");
-			xAxisTitleSVG.append("\"");
-			xAxisTitleSVG.append(" x=\"").append(heatMapBoxStartX + (heatMapBoxWidth / 2.0)).append("\"");
-			xAxisTitleSVG.append(" y=\"").append(xAxisTitleStartY).append("\"");
-			xAxisTitleSVG.append(">");
-			xAxisTitleSVG.append(X_AXIS_TITLE);
-			xAxisTitleSVG.append("</text>");
-		}
-
-		final String colorForZeroVal = colorScheme.getBackgroundColor();
-		
-		final StringBuilder boxSVG;
-		{
-			boxSVG = new StringBuilder();
-			boxSVG.append("<rect x=\"").append(heatMapBoxStartX).append("\" y=\"").append(BOX_START_Y).append("\" width=\"").append(heatMapBoxWidth)
-					.append("\" height=\"").append(heatMapBoxHeight).append("\" style=\"fill:").append(colorForZeroVal)
-					.append(";stroke:black;stroke-width:1\"/>").append(NL);
-		}
-
-		final StringBuilder colorMapSVG;
-		{
-			colorMapSVG = new StringBuilder();
-
-			double y = heatMapStartY; // BOX_START_Y;
-
-			for (int i = rowCount - 1; i >= 0; i--) {
-				final String[] row = heatMap[i];
-
-				double x = heatMapStartX; // boxStartX;
-
-				for (final String color : row) {
-
-					if (!Objects.equals(color, colorForZeroVal)) {
-						colorMapSVG.append("<rect");
-						colorMapSVG.append(" x=\"").append(x).append("\"");
-						colorMapSVG.append(" y=\"").append(y).append("\"");
-						colorMapSVG.append(" fill=\"").append(color).append("\"");
-						colorMapSVG.append(" width=\"").append(heatMapSingleAreaWidth).append("\"");
-						colorMapSVG.append(" height=\"").append(heatMapSingleAreaHeight).append("\"");
-						colorMapSVG.append("/>");
-						colorMapSVG.append(NL);
-					}
-
-					x += heatMapSingleAreaWidth;
-				}
-
-				y += heatMapSingleAreaHeight;
-			}
-		}
-
-		final StringBuilder svg = new StringBuilder();
-
-		// Need to set the width & height of the SVG to prevent clipping of large SVGs.
-		final double svgEndX = heatMapBoxEndX + SVGConstants.LEFT_RIGHT_MARGIN;
-		final double svgEndY = xAxisTitleEndY + SVGConstants.TOP_DOWN_MARGIN;
-
-		svg.append("<svg width=\"").append(svgEndX).append("\" height=\"").append(svgEndY).append("\">").append(NL);
-		svg.append(xAxisTitleSVG).append(NL);
-		svg.append(xAxisTicksSVG).append(NL);
-		svg.append(xAxisLabelsSVG).append(NL);
-		svg.append(yAxisTitleSVG).append(NL);
-		svg.append(yAxisLabelsSVG).append(NL);
-		svg.append(yAxisTicksSVG).append(NL);
-		svg.append(boxSVG).append(NL);
-		svg.append(colorMapSVG).append(NL);
-		svg.append("</svg>");
-
-		return new HeatMapSVG(svg.toString(), xAxisLabelSkipCount, heatMapBoxStartX, heatMapSingleAreaWidth);
-	}
-
+	
 	private final Density<Double, Long, Long> density;
 	private final int defaultTimeLabelSkipCount;
 
@@ -499,19 +195,346 @@ final class TimeSeriesLatencyDensity {
 		this.defaultTimeLabelSkipCount = defaultTimeLabelSkipCount;
 	}
 
-	private String[][] getHeatMap(final HeatMapColorScheme colorScheme) {
-		return getColoredHeatMap(this.density, colorScheme);
-	}
-
 	HeatMapSVG getHeatMapSVG(final TimeUnit latencyUnit, final double heatMapSingleAreaWidth, final HeatMapColorScheme colorScheme) {
 		return getHeatMapSVG(latencyUnit, this.defaultTimeLabelSkipCount, heatMapSingleAreaWidth, colorScheme);
 	}
 
 	HeatMapSVG getHeatMapSVG(final TimeUnit latencyUnit, final int timeLabelSkipCount, final double heatMapSingleAreaWidth, final HeatMapColorScheme colorScheme) {
 
-		final String[][] heatMap = getHeatMap(colorScheme);
-		return getHeatMapSVG(heatMap, colorScheme, this.density.getRowIntervalPoints(), this.density.getColumnIntervalPoints(),
-				timeLabelSkipCount, latencyUnit, heatMapSingleAreaWidth);
+		return getHeatMapSVG(this.density, colorScheme, timeLabelSkipCount, latencyUnit, heatMapSingleAreaWidth);
+	}
+
+	/**
+	 * TODO - re-factor common code from this and BarChart.
+	 */
+	private static HeatMapSVG getHeatMapSVG(final Density<Double, Long, Long> density, 
+											final HeatMapColorScheme colorScheme, 
+											final int timeLabelSkipCount,
+											final TimeUnit latencyUnit, 
+											final double heatMapSingleAreaWidth) {
+		
+		final Long[][] matrix = density.getMatrix();
+		
+		final String[][] heatMap = getColoredHeatMap(matrix, colorScheme);
+		
+		final int rowCount = heatMap.length;
+		final int columnCount = heatMap[0].length;
+		
+		final String NL = System.lineSeparator();
+		final int START_X = SVGConstants.LEFT_RIGHT_MARGIN;
+		final int START_Y = SVGConstants.TOP_DOWN_MARGIN;
+		
+		final int TICK_LENGTH = 10;
+		final int SPACE_BETWEEN_LABEL_AND_TICK = 10;
+		final int SPACE_BETWEEN_TITLE_AND_LABEL = 10;
+		
+		final String latencyUnitShortForm = Utils.toShortForm(latencyUnit);
+		final String yAxisTitle = "Latency" + " (" + latencyUnitShortForm + ")";
+		final double Y_AXIS_TITLE_FONT_SIZE = SVGConstants.MONOSPACE_FONT_SIZE;
+		final String Y_AXIS_TITLE_FONT_FAMILY = SVGConstants.MONOSPACE_FONT_FAMILY;
+		final double Y_AXIS_TITLE_START_X = START_X;
+		final double Y_AXIS_TITLE_END_X = Y_AXIS_TITLE_START_X + SVGConstants.MONOSPACE_FONT_SIZE;
+		
+		final double Y_AXIS_LABEL_FONT_SIZE = SVGConstants.MONOSPACE_FONT_SIZE;
+		final String Y_AXIS_LABEL_FONT_FAMILY = SVGConstants.MONOSPACE_FONT_FAMILY;
+		final double Y_AXIS_LABEL_START_X = Y_AXIS_TITLE_END_X + SPACE_BETWEEN_TITLE_AND_LABEL;
+		
+		final String X_AXIS_TITLE = "Time";
+		final double X_AXIS_TITLE_FONT_SIZE = SVGConstants.MONOSPACE_FONT_SIZE;
+		final String X_AXIS_TITLE_FONT_FAMILY = SVGConstants.MONOSPACE_FONT_FAMILY;
+		
+		final double BOX_START_Y = START_Y;
+		
+		final ArrayList<String> yAxisLabels = 
+				forEach(reverse(density.getRowIntervalPoints(), new ArrayListSupplier<IndexedDataPoint<Double>>()), Y_AXIS_LABEL_MAKER, new ArrayListSupplier<String>());
+		
+		final int yAxisMaxLabelLength = 
+				Collections.max(forEach(yAxisLabels, CharSeqLengthFunction.INSTANCE, new ArrayListSupplier<Integer>())).intValue();
+		
+		final ArrayList<String> yAxisPaddedLabels = 
+				Utils.getPaddedLabels(yAxisLabels, yAxisMaxLabelLength, new ArrayListSupplier<String>(), true);
+		
+		final double yAxisMaxLabelWidth = yAxisMaxLabelLength * SVGConstants.MONOSPACE_FONT_WIDTH;
+		
+		final double yAxisMajorTickStartX = Y_AXIS_LABEL_START_X + yAxisMaxLabelWidth + SPACE_BETWEEN_LABEL_AND_TICK;
+		final double yAxisTickEndX = yAxisMajorTickStartX + TICK_LENGTH;
+		
+		final double heatMapSingleAreaHeight = Math.min(MAX_HEAT_MAP_HEIGHT / rowCount, DEFAULT_HEAT_MAP_SINGLE_AREA_HEIGHT);
+		
+		final double heatMapHeight = rowCount * heatMapSingleAreaHeight;
+		final double heatMapWidth = columnCount * heatMapSingleAreaWidth;
+		
+		final double heatMapBoxStartX = yAxisTickEndX;
+		final double heatMapStartX = heatMapBoxStartX + heatMapSingleAreaWidth;
+		final double heatMapStartY = BOX_START_Y + /* gutter */DEFAULT_HEAT_MAP_SINGLE_AREA_HEIGHT;
+		final double heatMapBoxEndX = heatMapStartX + heatMapWidth + heatMapSingleAreaWidth;
+		final double heatMapBoxEndY = heatMapStartY + heatMapHeight + /* gutter */DEFAULT_HEAT_MAP_SINGLE_AREA_HEIGHT;
+		final double heatMapBoxHeight = heatMapBoxEndY - BOX_START_Y;
+		final double heatMapBoxWidth = heatMapBoxEndX - heatMapBoxStartX;
+		
+		final double yAxisTitleStartY = BOX_START_Y + ((heatMapBoxHeight / 2.0) - (Y_AXIS_TITLE_FONT_SIZE / 2.0));
+		
+		final double xAxisTickStartY = heatMapBoxEndY;
+		final double xAxisMajorTickEndY = xAxisTickStartY + TICK_LENGTH;
+		final double xAxisMinorTickEndY = xAxisTickStartY + (TICK_LENGTH / 2.0);
+		
+		// TODO - check if cast to int is OK
+		final int yAxisLabelSkipCount = (int) (DEFAULT_HEAT_MAP_SINGLE_AREA_HEIGHT / heatMapSingleAreaHeight);
+		
+		final double xAxisLabelStartY = xAxisMajorTickEndY + SPACE_BETWEEN_LABEL_AND_TICK;
+		
+		final StringBuilder yAxisTitleSVG;
+		{
+			yAxisTitleSVG = new StringBuilder();
+		
+			yAxisTitleSVG.append("<text ");
+			yAxisTitleSVG.append("style=\"");
+			yAxisTitleSVG.append("font-family:").append(Y_AXIS_TITLE_FONT_FAMILY).append(";");
+		
+			yAxisTitleSVG.append("font-size:").append(Y_AXIS_TITLE_FONT_SIZE).append("px;");
+			yAxisTitleSVG.append("text-anchor: middle;"); // related to rotation of the title
+			yAxisTitleSVG.append("dominant-baseline: middle;"); // related to rotation of the title
+			yAxisTitleSVG.append("\"");
+			yAxisTitleSVG.append(" x=\"").append(Y_AXIS_TITLE_START_X).append("\"");
+			yAxisTitleSVG.append(" y=\"").append(yAxisTitleStartY).append("\"");
+			yAxisTitleSVG.append(" transform=\"rotate(-90,").append(Y_AXIS_TITLE_START_X).append(",").append(yAxisTitleStartY).append(")\"");
+			yAxisTitleSVG.append(">");
+			yAxisTitleSVG.append(yAxisTitle);
+			yAxisTitleSVG.append("</text>");
+		}
+		
+		final StringBuilder yAxisLabelsSVG;
+		final StringBuilder yAxisTicksSVG;
+		{
+			yAxisLabelsSVG = new StringBuilder();
+			yAxisTicksSVG = new StringBuilder();
+		
+			yAxisLabelsSVG.append("<g style=\"font-family:").append(Y_AXIS_LABEL_FONT_FAMILY).append(";font-size:").append(Y_AXIS_LABEL_FONT_SIZE)
+					.append("px;\">").append(NL);
+			yAxisTicksSVG.append("<g style=\"stroke:black; stroke-width:1\">").append(NL);
+		
+			double yAxisLabelStartY = heatMapStartY;
+		
+			for (int i = 0; i <= rowCount; i++) {
+		
+				final boolean skipLabel = Utils.skipLabel(i, rowCount, yAxisLabelSkipCount);
+		
+				if (skipLabel == false) {
+					yAxisLabelsSVG.append("<text style=\"dominant-baseline: central;\" x=\"").append(Y_AXIS_LABEL_START_X).append("\" y=\"")
+							.append(yAxisLabelStartY).append("\">").append(yAxisPaddedLabels.get(i)).append("</text>").append(NL);
+					
+					yAxisTicksSVG
+						.append("<line x1=\"").append(yAxisMajorTickStartX)
+						.append("\" y1=\"").append(yAxisLabelStartY)
+						.append("\" x2=\"").append(yAxisTickEndX)
+						.append("\" y2=\"").append(yAxisLabelStartY)
+						.append("\"/>").append(NL);
+				}
+		
+				yAxisLabelStartY += heatMapSingleAreaHeight;
+			}
+		
+			yAxisLabelsSVG.append("</g>");
+			yAxisTicksSVG.append("</g>");
+		}
+		
+		final ArrayList<IndexedDataPoint<Long>> timestampPoints = new ArrayList<>(density.getColumnIntervalPoints());
+		
+		final double xAxisLabelEndY;
+		final StringBuilder xAxisTicksSVG;
+		final StringBuilder xAxisLabelsSVG;
+		{
+			xAxisTicksSVG = new StringBuilder();
+			xAxisLabelsSVG = new StringBuilder();
+		
+			xAxisTicksSVG.append("<g style=\"stroke:black; stroke-width:1\">").append(NL);
+			xAxisLabelsSVG.append("<g style=\"font-family:").append(X_AXIS_LABEL_FONT_FAMILY).append(";font-size:").append(X_AXIS_LABEL_FONT_SIZE).append("px;\">").append(NL);
+		
+			double x = heatMapStartX; // boxStartX;
+		
+			int maxXAxisLabelPartCount = Integer.MIN_VALUE;
+			final double fontSize = X_AXIS_LABEL_FONT_SIZE;
+		
+			for (int i = 0; i <= columnCount; i++) {
+				final boolean skipLabel = Utils.skipLabel(i, columnCount, timeLabelSkipCount);
+		
+				final double xAxisTickEndY = skipLabel ? xAxisMinorTickEndY : xAxisMajorTickEndY;
+		
+				xAxisTicksSVG.append("<line x1=\"").append(x).append("\" y1=\"").append(xAxisTickStartY).append("\" x2=\"").append(x)
+						.append("\" y2=\"").append(xAxisTickEndY).append("\"/>").append(NL);
+		
+				if (skipLabel == false) {
+					final String multiLineLabel = timestampPoints.get(i).toString(TIMESTAMP_LABEL_MAKER);
+		
+					final MultiSpanSVGText label = Utils.createMultiSpanSVGText(multiLineLabel, x, xAxisLabelStartY, fontSize, null);
+		
+					xAxisLabelsSVG.append(label.getSvg());
+		
+					maxXAxisLabelPartCount = Math.max(label.getSpanCount(), maxXAxisLabelPartCount);
+				}
+		
+				x += heatMapSingleAreaWidth;
+			}
+		
+			xAxisLabelEndY = xAxisLabelStartY + (maxXAxisLabelPartCount * fontSize);
+		
+			xAxisTicksSVG.append("</g>");
+			xAxisLabelsSVG.append("</g>");
+		}
+		
+		final double xAxisTitleEndY;
+		final StringBuilder xAxisTitleSVG;
+		{
+			final double xAxisTitleStartY = xAxisLabelEndY + SPACE_BETWEEN_TITLE_AND_LABEL;
+			xAxisTitleEndY = xAxisTitleStartY + X_AXIS_TITLE_FONT_SIZE;
+		
+			xAxisTitleSVG = new StringBuilder();
+		
+			xAxisTitleSVG.append("<text ");
+			xAxisTitleSVG.append("style=\"");
+			xAxisTitleSVG.append("font-family:").append(X_AXIS_TITLE_FONT_FAMILY).append(";");
+			xAxisTitleSVG.append("font-size:").append(X_AXIS_TITLE_FONT_SIZE).append("px;");
+			xAxisTitleSVG.append("text-anchor: middle;");
+			xAxisTitleSVG.append("\"");
+			xAxisTitleSVG.append(" x=\"").append(heatMapBoxStartX + (heatMapBoxWidth / 2.0)).append("\"");
+			xAxisTitleSVG.append(" y=\"").append(xAxisTitleStartY).append("\"");
+			xAxisTitleSVG.append(">");
+			xAxisTitleSVG.append(X_AXIS_TITLE);
+			xAxisTitleSVG.append("</text>");
+		}
+		
+		final String colorForZeroVal = colorScheme.getBackgroundColor();
+		
+		final StringBuilder boxSVG;
+		{
+			boxSVG = new StringBuilder();
+			boxSVG.append("<rect x=\"").append(heatMapBoxStartX).append("\" y=\"").append(BOX_START_Y).append("\" width=\"").append(heatMapBoxWidth)
+					.append("\" height=\"").append(heatMapBoxHeight).append("\" style=\"fill:").append(colorForZeroVal)
+					.append(";stroke:black;stroke-width:1\"/>").append(NL);
+		}
+		
+		final StringBuilder colorMapSVG;
+		{
+			colorMapSVG = new StringBuilder();
+		
+			double y = heatMapStartY;
+		
+			for (int rowNum = rowCount - 1, r = 0; rowNum >= 0; rowNum--, r++) {
+				
+				final String[] row = heatMap[rowNum];
+				
+				final String yTooltip1 = yAxisLabels.get(r + 1);
+				final String yTooltip2 = yAxisLabels.get(r);
+				
+				double x = heatMapStartX;
+		
+				for (int colNum = 0; colNum < columnCount; colNum++) {
+					
+					final String color = row[colNum];
+		
+					if (!Objects.equals(color, colorForZeroVal)) {
+						
+						colorMapSVG.append("<rect");
+						colorMapSVG.append(" x=\"").append(x).append("\"");
+						colorMapSVG.append(" y=\"").append(y).append("\"");
+						colorMapSVG.append(" fill=\"").append(color).append("\"");
+						colorMapSVG.append(" width=\"").append(heatMapSingleAreaWidth).append("\"");
+						colorMapSVG.append(" height=\"").append(heatMapSingleAreaHeight).append("\"");
+						colorMapSVG.append(">");
+						
+						{//TOOLTIP
+							colorMapSVG.append("<title>");
+							colorMapSVG.append("Count = ").append(matrix[rowNum][colNum]).append(", Color = ").append(color).append(NL);
+							final String xTooltip1 = timestampPoints.get(colNum).toString(TIMESTAMP_TOOLTIP_MAKER);
+							final String xTooltip2 = timestampPoints.get(colNum + 1).toString(TIMESTAMP_TOOLTIP_MAKER);
+							colorMapSVG.append("Period: (").append(xTooltip1).append(" - ").append(xTooltip2).append(')').append(NL);
+							colorMapSVG.append("Latency range: (").append(yTooltip1).append(" - ").append(yTooltip2).append(") ").append(latencyUnitShortForm).append(NL);
+							colorMapSVG.append("</title>");
+						}
+						
+						colorMapSVG.append("</rect>");
+						colorMapSVG.append(NL);
+					}
+		
+					x += heatMapSingleAreaWidth;
+				}
+		
+				y += heatMapSingleAreaHeight;
+			}
+		}
+		
+		final StringBuilder svg = new StringBuilder();
+		
+		// Need to set the width & height of the SVG to prevent clipping of large SVGs.
+		final double svgEndX = heatMapBoxEndX + SVGConstants.LEFT_RIGHT_MARGIN;
+		final double svgEndY = xAxisTitleEndY + SVGConstants.TOP_DOWN_MARGIN;
+		
+		svg.append("<svg width=\"").append(svgEndX).append("\" height=\"").append(svgEndY).append("\">").append(NL);
+		svg.append(xAxisTitleSVG).append(NL);
+		svg.append(xAxisTicksSVG).append(NL);
+		svg.append(xAxisLabelsSVG).append(NL);
+		svg.append(yAxisTitleSVG).append(NL);
+		svg.append(yAxisLabelsSVG).append(NL);
+		svg.append(yAxisTicksSVG).append(NL);
+		svg.append(boxSVG).append(NL);
+		svg.append(colorMapSVG).append(NL);
+		svg.append("</svg>");
+		
+		return new HeatMapSVG(svg.toString(), timeLabelSkipCount, heatMapBoxStartX, heatMapSingleAreaWidth);
+	}
+	
+	/**
+	 * TODO - check if some code can be moved to {@linkplain Density}
+	 */
+	private static String[][] getColoredHeatMap(final Long[][] matrix, final HeatMapColorScheme colorScheme) {
+		final int rowCount = matrix.length;
+		final int columnCount = matrix[0].length;
+
+		final double min = 1;
+		long max = Long.MIN_VALUE;
+
+		for (int r = 0; r < rowCount; r++) {
+			for (int c = 0; c < columnCount; c++) {
+				final long val = matrix[r][c].longValue();
+
+				if (val > max) {
+					max = val;
+				}
+			}
+		}
+
+		final String[] colors = colorScheme.getForegroundColors();
+		final int colorCount = colors.length;
+		final double d = ((max - min) + 1) / colorCount;
+		
+		final String colorForZeroVal = colorScheme.getBackgroundColor();
+
+		final String[][] colorMap = new String[rowCount][columnCount];
+
+		for (int r = 0; r < rowCount; r++) {
+			for (int c = 0; c < columnCount; c++) {
+				final long val = matrix[r][c].longValue();
+
+				final String color;
+
+				if (val == 0) {
+					color = colorForZeroVal;
+				} else {
+					final double i = Math.floor((val - 1) / d);
+
+					if ((i > Integer.MAX_VALUE) || (i < Integer.MIN_VALUE)) {
+						throw new RuntimeException("Internal error: " + i);
+					}
+
+					final int colorIndex = (int) i;
+					color = colors[colorIndex];
+				}
+
+				colorMap[r][c] = color;
+			}
+		}
+
+		return colorMap;
 	}
 
 	String getTrxCountBarChartSVG(final int labelSkipCount, final double boxStartX, final double barWidth) {
