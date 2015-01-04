@@ -34,7 +34,7 @@ public enum HeatMapColorScheme {
 	NINE_CLASS_PU_RD(ColorPalette.PU_RD, 9),
 	NINE_CLASS_BLUES(ColorPalette.BLUES, 9),
 	NINE_CLASS_GREENS(ColorPalette.GREENS, 9),
-	NINE_CLASS_GREYS(ColorPalette.GREYS, 9),
+	EIGHT_CLASS_GREYS(ColorPalette.GREYS, 8),
 	NINE_CLASS_PURPLES(ColorPalette.PURPLES, 9),
 	NINE_CLASS_REDS(ColorPalette.REDS, 9),
 	SIXTEEN_CLASS_CUSTOM_1(ColorPalette.CUSTOM_1, 16),
