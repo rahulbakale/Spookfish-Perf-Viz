@@ -38,8 +38,7 @@ import spookfishperfviz.Density.IndexedDataPoint;
  * @since Nov, 2014
  */
 final class TimeSeriesLatencyDensity {
-
-	private static final String COLOR_WHITE = "#FFFFFF";
+	
 	private static final int DEFAULT_HEAT_MAP_SINGLE_AREA_HEIGHT = 20;
 
 	/**
@@ -47,20 +46,10 @@ final class TimeSeriesLatencyDensity {
 	 */
 	private static final double MAX_HEAT_MAP_HEIGHT = 400;
 
-	private static final double X_AXIS_LABEL_FONT_SIZE = 10; // TODO - add to
-																// SVGConstants.
+	private static final double X_AXIS_LABEL_FONT_SIZE = 10; // TODO - add to SVGConstants.
 	private static final String X_AXIS_LABEL_FONT_FAMILY = SVGConstants.MONOSPACE_FONT_FAMILY;
 
-	/*
-	 * private static final String[] COLORS = { "#FFE5E5", "#FFCCCC", "#FFB2B2",
-	 * "#FF9999", "#FF7F7F", "#FF6666", "#FF4C4C", "#FF3232", "#FF1919",
-	 * "#FF0000", "#E50000", "#CC0000", "#B20000", "#990000", "#7F0000",
-	 * "#660000", "#4C0000", "#330000", "#190000"};
-	 */
-
-	private static final String[] COLORS = { "#FFE6E6", "#FFCCCC", "#FFB2B2", "#FF9999", "#FF8080", "#FF6666", "#FF4D4D", "#FF3333", "#FF1919",
-			"#FF0000", "#E60000", "#CC0000", "#B20000", "#990000", "#800000", "#660000"/*, "#4C0000", "#330000", "#1A0000"*/};
-
+	
 	private static final UnaryOperator<Long> LONG_INC_OPERATOR = new UnaryOperator<Long>() {
 		@Override
 		public Long apply(final Long l) {
@@ -98,7 +87,7 @@ final class TimeSeriesLatencyDensity {
 	/**
 	 * TODO - check if some code can be moved to {@linkplain Density}
 	 */
-	private static String[][] getColoredHeatMap(final Density<Double, Long, Long> density, final String colorForZeroVal) {
+	private static String[][] getColoredHeatMap(final Density<Double, Long, Long> density, final HeatMapColorScheme colorScheme) {
 
 		final Long[][] matrix = density.getMatrix();
 
@@ -118,8 +107,11 @@ final class TimeSeriesLatencyDensity {
 			}
 		}
 
-		final int colorCount = COLORS.length;
+		final String[] colors = colorScheme.getForegroundColors();
+		final int colorCount = colors.length;
 		final double d = ((max - min) + 1) / colorCount;
+		
+		final String colorForZeroVal = colorScheme.getBackgroundColor();
 
 		final String[][] colorMap = new String[rowCount][columnCount];
 
@@ -139,7 +131,7 @@ final class TimeSeriesLatencyDensity {
 					}
 
 					final int colorIndex = (int) i;
-					color = COLORS[colorIndex];
+					color = colors[colorIndex];
 				}
 
 				colorMap[r][c] = color;
@@ -152,7 +144,7 @@ final class TimeSeriesLatencyDensity {
 	/**
 	 * TODO - re-factor common code from this and BarChart.
 	 */
-	private static HeatMapSVG getHeatMapSVG(final String[][] heatMap, final String colorForZeroVal,
+	private static HeatMapSVG getHeatMapSVG(final String[][] heatMap, final HeatMapColorScheme colorScheme,
 			final SortedSet<IndexedDataPoint<Double>> rowIntervalPoints, final SortedSet<IndexedDataPoint<Long>> columnIntervalPoints,
 			final int xAxisLabelSkipCount, final TimeUnit yAxisUnit, final double heatMapSingleAreaWidth) {
 
@@ -341,6 +333,8 @@ final class TimeSeriesLatencyDensity {
 			xAxisTitleSVG.append("</text>");
 		}
 
+		final String colorForZeroVal = colorScheme.getBackgroundColor();
+		
 		final StringBuilder boxSVG;
 		{
 			boxSVG = new StringBuilder();
@@ -448,20 +442,18 @@ final class TimeSeriesLatencyDensity {
 		this.defaultTimeLabelSkipCount = defaultTimeLabelSkipCount;
 	}
 
-	private String[][] getHeatMap(final String colorForZeroVal) {
-		return getColoredHeatMap(this.density, colorForZeroVal);
+	private String[][] getHeatMap(final HeatMapColorScheme colorScheme) {
+		return getColoredHeatMap(this.density, colorScheme);
 	}
 
-	HeatMapSVG getHeatMapSVG(final TimeUnit latencyUnit, final double heatMapSingleAreaWidth) {
-		return getHeatMapSVG(latencyUnit, this.defaultTimeLabelSkipCount, heatMapSingleAreaWidth);
+	HeatMapSVG getHeatMapSVG(final TimeUnit latencyUnit, final double heatMapSingleAreaWidth, final HeatMapColorScheme colorScheme) {
+		return getHeatMapSVG(latencyUnit, this.defaultTimeLabelSkipCount, heatMapSingleAreaWidth, colorScheme);
 	}
 
-	HeatMapSVG getHeatMapSVG(final TimeUnit latencyUnit, final int timeLabelSkipCount, final double heatMapSingleAreaWidth) {
+	HeatMapSVG getHeatMapSVG(final TimeUnit latencyUnit, final int timeLabelSkipCount, final double heatMapSingleAreaWidth, final HeatMapColorScheme colorScheme) {
 
-		final String colorForZeroVal = COLOR_WHITE;
-
-		final String[][] heatMap = getHeatMap(colorForZeroVal);
-		return getHeatMapSVG(heatMap, colorForZeroVal, this.density.getRowIntervalPoints(), this.density.getColumnIntervalPoints(),
+		final String[][] heatMap = getHeatMap(colorScheme);
+		return getHeatMapSVG(heatMap, colorScheme, this.density.getRowIntervalPoints(), this.density.getColumnIntervalPoints(),
 				timeLabelSkipCount, latencyUnit, heatMapSingleAreaWidth);
 	}
 

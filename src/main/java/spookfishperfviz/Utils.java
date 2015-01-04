@@ -736,10 +736,13 @@ final class Utils {
 			} else if (type == TimeUnit.class) {
 				value = TimeUnit.valueOf(s);
 
+			} else if (type == HeatMapColorScheme.class) {
+				value = HeatMapColorScheme.valueOf(s);
+
 			} else if ((type == Boolean[].class) || (type == boolean[].class) || (type == Short[].class) || (type == short[].class)
 					|| (type == Integer[].class) || (type == int[].class) || (type == Long[].class) || (type == long[].class)
 					|| (type == Float[].class) || (type == float[].class) || (type == Double[].class) || (type == double[].class)
-					|| (type == TimeUnit[].class)) {
+					|| (type == TimeUnit[].class) || (type == HeatMapColorScheme[].class)) {
 
 				final String[] elements = s.split("\\s*,\\s*", -1);
 				final int len = elements.length;
