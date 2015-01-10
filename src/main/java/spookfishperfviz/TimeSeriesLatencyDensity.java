@@ -487,6 +487,9 @@ final class TimeSeriesLatencyDensity {
 						colorMapSVG.append(">");
 						
 						{//TOOLTIP
+							
+							//TODO - escape HTML special characters in tooltip text. For e.g. spaces.
+							
 							colorMapSVG.append("<title>");
 							colorMapSVG.append("Count = ").append(matrix[rowNum][colNum]).append(", Color = ").append(color).append(NL);
 							final String xTooltip1 = timestampPoints.get(colNum).toString(TIMESTAMP_TOOLTIP_MAKER);
