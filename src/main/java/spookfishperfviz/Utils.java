@@ -831,4 +831,13 @@ final class Utils {
 		}
 		return b.toString();
 	}
+
+	static int safeToInt(final double d) {
+		
+		if ((d > Integer.MAX_VALUE) || (d < Integer.MIN_VALUE)) {
+			throw new RuntimeException("Internal error: " + d);
+		}
+	
+		return (int) d;
+	}
 }

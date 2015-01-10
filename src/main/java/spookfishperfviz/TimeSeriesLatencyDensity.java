@@ -505,7 +505,7 @@ final class TimeSeriesLatencyDensity {
 
 		final String[] colors = colorScheme.getForegroundColors();
 		final int colorCount = colors.length;
-		final double d = ((max - min) + 1) / colorCount;
+		final double binSize = ((max - min) + 1) / colorCount;
 		
 		final String colorForZeroVal = colorScheme.getBackgroundColor();
 
@@ -513,6 +513,7 @@ final class TimeSeriesLatencyDensity {
 
 		for (int r = 0; r < rowCount; r++) {
 			for (int c = 0; c < columnCount; c++) {
+				
 				final long val = matrix[r][c].longValue();
 
 				final String color;
@@ -520,14 +521,8 @@ final class TimeSeriesLatencyDensity {
 				if (val == 0) {
 					color = colorForZeroVal;
 				} else {
-					final double i = Math.floor((val - 1) / d);
-
-					if ((i > Integer.MAX_VALUE) || (i < Integer.MIN_VALUE)) {
-						throw new RuntimeException("Internal error: " + i);
-					}
-
-					final int colorIndex = (int) i;
-					color = colors[colorIndex];
+					final int binNumber = Utils.safeToInt(Math.floor((val - 1) / binSize));
+					color = colors[binNumber];
 				}
 
 				colorMap[r][c] = color;
