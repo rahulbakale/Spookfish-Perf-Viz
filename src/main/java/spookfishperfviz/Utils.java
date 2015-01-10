@@ -840,4 +840,50 @@ final class Utils {
 	
 		return (int) d;
 	}
+
+	static long[] toOneDimArray(final Long[][] matrix) {
+
+		final int rowCount = matrix.length;
+		final int colCount = matrix[0].length;
+
+		final long[] array = new long[rowCount * colCount];
+
+		for (int r = 0, i = 0; r < rowCount; r++) {
+			for (int c = 0; c < colCount; c++) {
+				array[i++] = matrix[r][c].longValue();
+			}
+		}
+
+		return array;
+	}
+
+	static <T> void fillMatrix(final T[] sourceArray, final T[][] targetMatrix) {
+
+		final int length = sourceArray.length;
+		final int rowCount = targetMatrix.length;
+		final int colCount = targetMatrix[0].length;
+
+		if (length != (rowCount * colCount)) {
+			throw new RuntimeException("Internal error: length = " + length + ", rowCount = " + rowCount + ", colCount = " + colCount);
+		}
+
+		for (int r = 0, i = 0; r < rowCount; r++) {
+			for (int c = 0; c < colCount; c++) {
+				targetMatrix[r][c] = sourceArray[i++];
+			}
+		}
+	}
+
+	static long getMax(final long[] values) {
+
+		long max = Long.MIN_VALUE;
+
+		for (long value : values) {
+			if (value > max) {
+				max = value;
+			}
+		}
+		return max;
+	}
+
 }

@@ -37,7 +37,51 @@ import spookfishperfviz.Density.IndexedDataPoint;
  * @since Nov, 2014
  */
 final class TimeSeriesLatencyDensity {
-	
+
+	private static final class ColorCalculator {
+
+		private final String[] colors;
+		private final double binSize;
+		private final String colorForZeroVal;
+
+		private ColorCalculator(final HeatMapColorScheme colorScheme, final long max) {
+
+			final double min = 1;
+
+			this.colors = colorScheme.getForegroundColors();
+			this.binSize = ((max - min) + 1) / this.colors.length;
+			this.colorForZeroVal = colorScheme.getBackgroundColor();
+		}
+
+		private String getColor(final long val) {
+
+			final String color;
+
+			if (val == 0) {
+				color = this.colorForZeroVal;
+			} else {
+				final int binNumber = Utils.safeToInt(Math.floor((val - 1) / this.binSize));
+				color = this.colors[binNumber];
+			}
+
+			return color;
+		}
+
+		static String[] getColorMap(final long[] values, final HeatMapColorScheme colorScheme) {
+
+			final ColorCalculator colorCalculator = new ColorCalculator(colorScheme, Utils.getMax(values));
+
+			final int size = values.length;
+			final String[] colorMap = new String[size];
+
+			for (int i = 0; i < size; i++) {
+				colorMap[i] = colorCalculator.getColor(values[i]);
+			}
+
+			return colorMap;
+		}
+	}
+
 	private static final int DEFAULT_HEAT_MAP_SINGLE_AREA_HEIGHT = 10;
 
 	/**
@@ -482,54 +526,21 @@ final class TimeSeriesLatencyDensity {
 		
 		return new HeatMapSVG(svg.toString(), timeLabelSkipCount, heatMapBoxStartX, heatMapSingleAreaWidth);
 	}
-	
+
 	/**
 	 * TODO - check if some code can be moved to {@linkplain Density}
 	 */
 	private static String[][] getColoredHeatMap(final Long[][] matrix, final HeatMapColorScheme colorScheme) {
+
+		final String[] colorMapArray = ColorCalculator.getColorMap(Utils.toOneDimArray(matrix), colorScheme);
+
 		final int rowCount = matrix.length;
 		final int columnCount = matrix[0].length;
 
-		final double min = 1;
-		long max = Long.MIN_VALUE;
+		final String[][] colorMapMatrix = new String[rowCount][columnCount];
+		Utils.fillMatrix(colorMapArray, colorMapMatrix);
 
-		for (int r = 0; r < rowCount; r++) {
-			for (int c = 0; c < columnCount; c++) {
-				final long val = matrix[r][c].longValue();
-
-				if (val > max) {
-					max = val;
-				}
-			}
-		}
-
-		final String[] colors = colorScheme.getForegroundColors();
-		final int colorCount = colors.length;
-		final double binSize = ((max - min) + 1) / colorCount;
-		
-		final String colorForZeroVal = colorScheme.getBackgroundColor();
-
-		final String[][] colorMap = new String[rowCount][columnCount];
-
-		for (int r = 0; r < rowCount; r++) {
-			for (int c = 0; c < columnCount; c++) {
-				
-				final long val = matrix[r][c].longValue();
-
-				final String color;
-
-				if (val == 0) {
-					color = colorForZeroVal;
-				} else {
-					final int binNumber = Utils.safeToInt(Math.floor((val - 1) / binSize));
-					color = colors[binNumber];
-				}
-
-				colorMap[r][c] = color;
-			}
-		}
-
-		return colorMap;
+		return colorMapMatrix;
 	}
 
 	String getTrxCountBarChartSVG(final int labelSkipCount, final double boxStartX, final double barWidth) {
