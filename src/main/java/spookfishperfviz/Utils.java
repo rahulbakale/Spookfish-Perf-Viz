@@ -518,66 +518,6 @@ final class Utils {
 	}
 
 	/**
-	 * @deprecated
-	 * @see #createIntervalPoints2(double, double, int)
-	 * TODO - delete later
-	 */
-	@Deprecated
-	private static double[] createIntervalPointsOld(final double min, final double max, final int nIntervalPoints) {
-
-		if (min < 0) {
-			throw new IllegalArgumentException("min = <" + min + ">");
-		}
-
-		if (max < 0) {
-			throw new IllegalArgumentException("max = <" + max + ">");
-		}
-
-		if (min > max) {
-			throw new IllegalArgumentException("min = <" + min + ">, max = <" + max + ">");
-		}
-
-		if (nIntervalPoints < 1) {
-			throw new IllegalArgumentException("Too few interval points <" + nIntervalPoints + ">");
-		}
-
-		/**
-		 * Cases to handle
-		 * 
-		 * Both min and max > 1 newMin == newMax (e.g. min = 3, max = 3) newMin
-		 * != newMax (e.g. min = 1.3, max = 1.3) newMin != newMax (e.g. min =
-		 * 1.3, max = 1.7)
-		 * 
-		 * Both 0 <= (min and max) < 1 newMin != newMax (e.g. min = 0.3, max =
-		 * 0.5) newMin == newMax (e.g. min = 0, max = 0)
-		 * 
-		 * 0 <= min < 1 and max >= 1 newMin != newMax (e.g. min = 0, max = 1.3)
-		 */
-
-		final double[] adjustedMinMax = getAdjustedMinMax(min, max);
-		final double adjustedMin = adjustedMinMax[0];
-		final double adjustedMax = adjustedMinMax[1];
-
-		final int nIntervals = nIntervalPoints - 1;
-		final double intervalLength = (adjustedMax - adjustedMin) / nIntervals;
-		final double adjustedIntervalLength = (intervalLength > 1) ? Math.ceil(intervalLength) : intervalLength;
-
-		// TODO - check if casting to integer is safe
-		final int adjustedNIntervals = (int) Math.ceil((adjustedMax - adjustedMin) / adjustedIntervalLength);
-		final int adjustedNIntervalPoints = adjustedNIntervals + 1;
-
-		final double[] intervalPoints = new double[adjustedNIntervalPoints];
-
-		intervalPoints[0] = adjustedMin;
-
-		for (int i = 1; i < adjustedNIntervalPoints; i++) {
-			intervalPoints[i] = intervalPoints[i - 1] + adjustedIntervalLength;
-		}
-
-		return intervalPoints;
-	}
-
-	/**
 	 * TODO - test with various data samples TODO - verify mathematical
 	 * precision
 	 * 
