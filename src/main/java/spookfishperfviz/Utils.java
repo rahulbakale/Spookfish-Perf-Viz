@@ -420,21 +420,23 @@ final class Utils {
 	}
 
 	static double[] toDoubles(final int[] ints) {
+
 		final int len = ints.length;
 		final double[] doubles = new double[len];
 
 		for (int i = 0; i < len; i++) {
-			doubles[i] = ints[i];
+			doubles[i] = safeToDouble(ints[i]);
 		}
 		return doubles;
 	}
 
 	static double[] toDoubles(final long[] longs) {
+
 		final int len = longs.length;
 		final double[] doubles = new double[len];
 
 		for (int i = 0; i < len; i++) {
-			doubles[i] = longs[i];
+			doubles[i] = safeToDouble(longs[i]);
 		}
 		return doubles;
 	}
@@ -841,6 +843,17 @@ final class Utils {
 		return (int) d;
 	}
 
+	static double safeToDouble(final long l) {
+
+		final double d = l;
+
+		if (((long) d) != l) {
+			throw new RuntimeException("Internal error: " + l);
+		}
+
+		return d;
+	}
+
 	static long[] toOneDimArray(final Long[][] matrix) {
 
 		final int rowCount = matrix.length;
@@ -874,11 +887,11 @@ final class Utils {
 		}
 	}
 
-	static long getMax(final long[] values) {
+	static double getMax(final double[] values) {
 
-		long max = Long.MIN_VALUE;
+		double max = Double.MIN_VALUE;
 
-		for (long value : values) {
+		for (double value : values) {
 			if (value > max) {
 				max = value;
 			}

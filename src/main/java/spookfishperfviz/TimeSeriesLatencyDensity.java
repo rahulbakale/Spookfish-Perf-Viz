@@ -38,50 +38,6 @@ import spookfishperfviz.Density.IndexedDataPoint;
  */
 final class TimeSeriesLatencyDensity {
 
-	private static final class ColorCalculator {
-
-		private final String[] colors;
-		private final double binSize;
-		private final String colorForZeroVal;
-
-		private ColorCalculator(final HeatMapColorScheme colorScheme, final long max) {
-
-			final double min = 1;
-
-			this.colors = colorScheme.getForegroundColors();
-			this.binSize = ((max - min) + 1) / this.colors.length;
-			this.colorForZeroVal = colorScheme.getBackgroundColor();
-		}
-
-		private String getColor(final long val) {
-
-			final String color;
-
-			if (val == 0) {
-				color = this.colorForZeroVal;
-			} else {
-				final int binNumber = Utils.safeToInt(Math.floor((val - 1) / this.binSize));
-				color = this.colors[binNumber];
-			}
-
-			return color;
-		}
-
-		static String[] getColorMap(final long[] values, final HeatMapColorScheme colorScheme) {
-
-			final ColorCalculator colorCalculator = new ColorCalculator(colorScheme, Utils.getMax(values));
-
-			final int size = values.length;
-			final String[] colorMap = new String[size];
-
-			for (int i = 0; i < size; i++) {
-				colorMap[i] = colorCalculator.getColor(values[i]);
-			}
-
-			return colorMap;
-		}
-	}
-
 	private static final int DEFAULT_HEAT_MAP_SINGLE_AREA_HEIGHT = 10;
 
 	/**
@@ -535,7 +491,7 @@ final class TimeSeriesLatencyDensity {
 	 */
 	private static String[][] getColoredHeatMap(final Long[][] matrix, final HeatMapColorScheme colorScheme) {
 
-		final String[] colorMapArray = ColorCalculator.getColorMap(Utils.toOneDimArray(matrix), colorScheme);
+		final String[] colorMapArray = ColorRampCalculator.getColorMap(Utils.toOneDimArray(matrix), colorScheme);
 
 		final int rowCount = matrix.length;
 		final int columnCount = matrix[0].length;
