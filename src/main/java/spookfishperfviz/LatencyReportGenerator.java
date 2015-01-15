@@ -75,7 +75,7 @@ public final class LatencyReportGenerator {
 		final double[] percentilePoints = options.getMandatory("percentilePoints", double[].class);
 		final Integer heatMapMaxIntervalPoints = options.getOptional("heatMapMaxIntervalPoints", Integer.class, null);
 
-		final HeatMapColorScheme heapMapColorScheme = options.getOptional("heapMapColorScheme", HeatMapColorScheme.class, HeatMapColorScheme.DEFAULT);
+		final ColorRampScheme colorRampScheme = options.getOptional("colorRampScheme", ColorRampScheme.class, ColorRampScheme.DEFAULT);
 
 		final String inFile = options.getMandatory("inFile", String.class);
 		final String outFile = options.getMandatory("outFile", String.class);
@@ -87,7 +87,7 @@ public final class LatencyReportGenerator {
 		try (final Reader fr = new FileReader(inFile); final Reader source = new BufferedReader(fr);) {
 			
 			path = generateReport(source, parser, latencyUnit, histogramIntervalPoints, percentilePoints, 
-									heatMapMaxIntervalPoints, heatMapSingleAreaWidth, heapMapColorScheme, outFile);
+									heatMapMaxIntervalPoints, heatMapSingleAreaWidth, colorRampScheme, outFile);
 		}
 
 		System.out.println("Report generated at <" + path + ">");
@@ -100,7 +100,7 @@ public final class LatencyReportGenerator {
 										final double[] percentileKeys, 
 										final Integer maxIntervalPointsForLatencyDensity,
 										final double heatMapSingleAreaWidth, 
-										final HeatMapColorScheme heapMapColorScheme, 
+										final ColorRampScheme colorRampScheme, 
 										final String outputFilePath) throws IOException {
 		
 		final LatencyStatsToHtmlFunc latencyStatsToHtmlFunc = new LatencyStatsToHtmlFunc() {
@@ -108,7 +108,7 @@ public final class LatencyReportGenerator {
 			public String[] toHtml(final LatencyStats stats) {
 
 				final TimeSeriesLatencyDensity density = TimeSeriesLatencyDensity.create(stats.getLatencies(), stats.getTimestamps(), maxIntervalPointsForLatencyDensity);
-				return stats.toHtml(intervalPointsForLatencyHistogram, percentileKeys, density, heatMapSingleAreaWidth, heapMapColorScheme);
+				return stats.toHtml(intervalPointsForLatencyHistogram, percentileKeys, density, heatMapSingleAreaWidth, colorRampScheme);
 			}
 		};
 
@@ -124,7 +124,7 @@ public final class LatencyReportGenerator {
 										final double maxIntervalPointForLatencyDensity, 
 										final Integer maxIntervalPointsForLatencyDensity, 
 										final double heatMapSingleAreaWidth, 
-										final HeatMapColorScheme heapMapColorScheme, 
+										final ColorRampScheme colorRampScheme, 
 										final String outputFilePath) throws IOException {
 		
 		final LatencyStatsToHtmlFunc latencyStatsToHtmlFunc = new LatencyStatsToHtmlFunc() {
@@ -132,7 +132,7 @@ public final class LatencyReportGenerator {
 			public String[] toHtml(final LatencyStats stats) {
 
 				final TimeSeriesLatencyDensity density = TimeSeriesLatencyDensity.create(stats.getLatencies(), stats.getTimestamps(), minIntervalPointForLatencyDensity, maxIntervalPointForLatencyDensity, maxIntervalPointsForLatencyDensity);
-				return stats.toHtml(intervalPointsForLatencyHistogram, percentileKeys, density, heatMapSingleAreaWidth, heapMapColorScheme);
+				return stats.toHtml(intervalPointsForLatencyHistogram, percentileKeys, density, heatMapSingleAreaWidth, colorRampScheme);
 			}
 		};
 
@@ -807,13 +807,13 @@ public final class LatencyReportGenerator {
 				final double[] percentileKeys, 
 				final TimeSeriesLatencyDensity density, 
 				final double heatMapSingleAreaWidth, 
-				final HeatMapColorScheme heapMapColorScheme) {
+				final ColorRampScheme colorRampScheme) {
 
 			final String eventType = this.eventType;
 
-			final HeatMapSVG heatMapSVG = density.getHeatMapSVG(this.latencyUnit, heatMapSingleAreaWidth, heapMapColorScheme);
+			final HeatMapSVG heatMapSVG = density.getHeatMapSVG(this.latencyUnit, heatMapSingleAreaWidth, colorRampScheme);
 			final String trxCountBarChartSVG = 
-					density.getTrxCountBarChartSVG(heatMapSVG.getXAxisLabelSkipCount(), heatMapSVG.getHeatMapBoxStartX(), heatMapSVG.getHeatMapSingleAreaWidth());
+					density.getTrxCountBarChartSVG(heatMapSVG.getXAxisLabelSkipCount(), heatMapSVG.getHeatMapBoxStartX(), heatMapSVG.getHeatMapSingleAreaWidth(), colorRampScheme);
 
 			final String NL = System.lineSeparator();
 			final String BR = "<br/>";

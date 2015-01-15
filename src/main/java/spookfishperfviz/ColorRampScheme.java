@@ -23,7 +23,7 @@ import java.util.Objects;
  * @author Rahul Bakale
  * @since Dec, 2014
  */
-public enum HeatMapColorScheme {
+public enum ColorRampScheme {
 
 	YELLOW_OR_RED(ColorPalette.COLOR_BREWER_YELLOW_OR_RED, 9),
 	BLUE_GREEN(ColorPalette.COLOR_BREWER_BLUE_GREEN, 9),
@@ -38,26 +38,26 @@ public enum HeatMapColorScheme {
 	RED_2(ColorPalette.INHOUSE_RED_1, 16),
 	RED_3(ColorPalette.INHOUSE_RED_2, 19);
 
-	static final HeatMapColorScheme DEFAULT = RED_2;
+	static final ColorRampScheme DEFAULT = RED_2;
 
 	private static final String WHITE = "#ffffff";
 
 	private final String[] foregroundColors;
 	private final String backgroundColor;
 
-	private HeatMapColorScheme(final ColorPalette palette, final int nDataClasses) {
+	private ColorRampScheme(final ColorPalette palette, final int nDataClasses) {
 		this(palette, nDataClasses, WHITE);
 	}
 
-	private HeatMapColorScheme(final ColorPalette palette, final int nDataClasses, final String backgroundColor) {
+	private ColorRampScheme(final ColorPalette palette, final int nDataClasses, final String backgroundColor) {
 		this(palette.getColors(), nDataClasses, backgroundColor);
 	}
 
-	private HeatMapColorScheme(final String[] foregroundColorSet, final int nDataClasses, final String backgroundColor) {
+	private ColorRampScheme(final String[] foregroundColorSet, final int nDataClasses, final String backgroundColor) {
 		this(Arrays.copyOfRange(foregroundColorSet, (foregroundColorSet.length - nDataClasses), foregroundColorSet.length), backgroundColor);
 	}
 
-	private HeatMapColorScheme(final String[] foregroundColors, final String backgroundColor) {
+	private ColorRampScheme(final String[] foregroundColors, final String backgroundColor) {
 
 		for (String fc : foregroundColors) {
 			if (Objects.equals(fc, backgroundColor)) {

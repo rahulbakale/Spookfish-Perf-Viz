@@ -670,13 +670,13 @@ final class Utils {
 			} else if (type == TimeUnit.class) {
 				value = TimeUnit.valueOf(s);
 
-			} else if (type == HeatMapColorScheme.class) {
-				value = HeatMapColorScheme.valueOf(s);
+			} else if (type == ColorRampScheme.class) {
+				value = ColorRampScheme.valueOf(s);
 
 			} else if ((type == Boolean[].class) || (type == boolean[].class) || (type == Short[].class) || (type == short[].class)
 					|| (type == Integer[].class) || (type == int[].class) || (type == Long[].class) || (type == long[].class)
 					|| (type == Float[].class) || (type == float[].class) || (type == Double[].class) || (type == double[].class)
-					|| (type == TimeUnit[].class) || (type == HeatMapColorScheme[].class)) {
+					|| (type == TimeUnit[].class) || (type == ColorRampScheme[].class)) {
 
 				final String[] elements = s.split("\\s*,\\s*", -1);
 				final int len = elements.length;
@@ -837,6 +837,50 @@ final class Utils {
 			}
 		}
 		return max;
+	}
+
+	static Double[] getNonZeroMinMax(final double[] sorted) {
+
+		final double min = sorted[0];
+		final double max = sorted[sorted.length - 1];
+
+		final Double nonZeroMin;
+
+		if (min == 0) {
+			Double nzmi = null;
+
+			for (int i = 1; i < sorted.length; i++) {
+				final double d = sorted[i];
+				if (d != 0) {
+					nzmi = Double.valueOf(d);
+					break;
+				}
+			}
+
+			nonZeroMin = nzmi;
+		} else {
+			nonZeroMin = Double.valueOf(min);
+		}
+
+		final Double nonZeroMax;
+
+		if (max == 0) {
+			Double nzma = null;
+
+			for (int i = sorted.length - 2; i >= 0; i--) {
+				final double d = sorted[i];
+				if (d != 0) {
+					nzma = Double.valueOf(d);
+					break;
+				}
+			}
+
+			nonZeroMax = nzma;
+		} else {
+			nonZeroMax = Double.valueOf(max);
+		}
+
+		return new Double[] { nonZeroMin, nonZeroMax };
 	}
 
 }

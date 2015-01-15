@@ -39,50 +39,10 @@ final class VerticalBarChart {
 	private final double[] data;
 	private final double max;
 
-	private final Double nonZeroMin;
-	private final Double nonZeroMax;
-
 	private VerticalBarChart(final double[] data, final String[] labels) {
 		this.data = data;
 		this.labels = labels;
-
-		final double[] sorted = Utils.sort(data);
-		final double min = sorted[0];
-		final double max = sorted[sorted.length - 1];
-
-		this.max = max;
-
-		if (min == 0) {
-			Double nonZeroMin = null;
-
-			for (int i = 1; i < sorted.length; i++) {
-				final double d = sorted[i];
-				if (d != 0) {
-					nonZeroMin = Double.valueOf(d);
-					break;
-				}
-			}
-
-			this.nonZeroMin = nonZeroMin;
-		} else {
-			this.nonZeroMin = Double.valueOf(min);
-		}
-
-		if (max == 0) {
-			Double nonZeroMax = null;
-
-			for (int i = sorted.length - 2; i >= 0; i--) {
-				final double d = sorted[i];
-				if (d != 0) {
-					nonZeroMax = Double.valueOf(d);
-					break;
-				}
-			}
-
-			this.nonZeroMax = nonZeroMax;
-		} else {
-			this.nonZeroMax = Double.valueOf(max);
-		}
+		this.max = Utils.minMax(data)[1];
 	}
 
 	String toSVG(	final int maxBarLength, 
@@ -91,13 +51,11 @@ final class VerticalBarChart {
 					final String labelFontFamily, 
 					final double labelFontSize, 
 					final int labelSkipCount, 
-					final boolean useColorCoding) {
+					final ColorRampScheme colorRampScheme) {
 		
 		final double[] data = this.data;
 		final int size = data.length;
-		final Double nonZeroMin = this.nonZeroMin;
 		final double max = this.max;
-		final Double nonZeroMax = this.nonZeroMax;
 		final String[] labels = this.labels;
 
 		final String NL = System.lineSeparator();
@@ -116,6 +74,8 @@ final class VerticalBarChart {
 		final String indent1 = "  ";
 		final String indent2 = "    ";
 
+		final String[] colors = colorRampScheme == null ? null : ColorRampCalculator.getColorMap(data, colorRampScheme);
+
 		final StringBuilder svgBars = new StringBuilder();
 		svgBars.append("<g style=\"stroke:grey; stroke-width:").append(barWidth).append("\">").append(NL);
 
@@ -128,7 +88,7 @@ final class VerticalBarChart {
 		for (int i = 0; i < size; i++, x += barWidth) {
 			final double d = data[i];
 			final long scaledBarLength = scale(maxBarLength, max, d);
-			final String[] lineAndLabelColor = useColorCoding ? getLineAndLabelColor(d, nonZeroMin, nonZeroMax) : null;
+			final String color = colors == null ? null : colors[i];
 
 			svgBars.append(indent2);
 			svgBars.append("<line x1=\"").append(x).append("\"");
@@ -136,7 +96,7 @@ final class VerticalBarChart {
 			svgBars.append(" x2=\"").append(x).append("\"");
 			svgBars.append(" y2=\"").append(barStartY - scaledBarLength).append("\"");
 
-			final String lineColor = lineAndLabelColor == null ? null : lineAndLabelColor[0];
+			final String lineColor = color;
 			if (lineColor != null) {
 				svgBars.append(" style=\"stroke:").append(lineColor).append("\"");
 			}
@@ -147,7 +107,7 @@ final class VerticalBarChart {
 
 				final String label = Utils.escapeHTMLSpecialChars(labels[i]);
 
-				final String labelColor = lineAndLabelColor == null ? null : lineAndLabelColor[1];
+				final String labelColor = color;
 
 				final MultiSpanSVGText multiSpanSVGText = Utils.createMultiSpanSVGText(label, x, labelStartY, labelFontSize, labelColor);
 
@@ -170,23 +130,6 @@ final class VerticalBarChart {
 				+ svgLabels + NL + indent1 + "</svg>";
 
 		return svg;
-	}
-
-	private static String[] getLineAndLabelColor(final double data, final Double nonZeroMin, final Double nonZeroMax) {
-		
-		final String color;
-
-		if (data == 0) {
-			color = "grey";
-		} else if (data == nonZeroMax.doubleValue()) {
-			color = "red";
-		} else if (data == nonZeroMin.doubleValue()) {
-			color = "blue";
-		} else {
-			color = "green";
-		}
-
-		return new String[] { color, color };
 	}
 
 	private static long scale(final long limit, final double maxData, final double data) {

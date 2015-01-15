@@ -195,11 +195,11 @@ final class TimeSeriesLatencyDensity {
 		this.defaultTimeLabelSkipCount = defaultTimeLabelSkipCount;
 	}
 
-	HeatMapSVG getHeatMapSVG(final TimeUnit latencyUnit, final double heatMapSingleAreaWidth, final HeatMapColorScheme colorScheme) {
+	HeatMapSVG getHeatMapSVG(final TimeUnit latencyUnit, final double heatMapSingleAreaWidth, final ColorRampScheme colorScheme) {
 		return getHeatMapSVG(latencyUnit, this.defaultTimeLabelSkipCount, heatMapSingleAreaWidth, colorScheme);
 	}
 
-	HeatMapSVG getHeatMapSVG(final TimeUnit latencyUnit, final int timeLabelSkipCount, final double heatMapSingleAreaWidth, final HeatMapColorScheme colorScheme) {
+	HeatMapSVG getHeatMapSVG(final TimeUnit latencyUnit, final int timeLabelSkipCount, final double heatMapSingleAreaWidth, final ColorRampScheme colorScheme) {
 
 		return getHeatMapSVG(this.density, colorScheme, timeLabelSkipCount, latencyUnit, heatMapSingleAreaWidth);
 	}
@@ -208,7 +208,7 @@ final class TimeSeriesLatencyDensity {
 	 * TODO - re-factor common code from this and BarChart.
 	 */
 	private static HeatMapSVG getHeatMapSVG(final Density<Double, Long, Long> density, 
-											final HeatMapColorScheme colorScheme, 
+											final ColorRampScheme colorScheme, 
 											final int timeLabelSkipCount,
 											final TimeUnit latencyUnit, 
 											final double heatMapSingleAreaWidth) {
@@ -489,7 +489,7 @@ final class TimeSeriesLatencyDensity {
 	/**
 	 * TODO - check if some code can be moved to {@linkplain Density}
 	 */
-	private static String[][] getColoredHeatMap(final Long[][] matrix, final HeatMapColorScheme colorScheme) {
+	private static String[][] getColoredHeatMap(final Long[][] matrix, final ColorRampScheme colorScheme) {
 
 		final String[] colorMapArray = ColorRampCalculator.getColorMap(Utils.toOneDimArray(matrix), colorScheme);
 
@@ -502,12 +502,12 @@ final class TimeSeriesLatencyDensity {
 		return colorMapMatrix;
 	}
 
-	String getTrxCountBarChartSVG(final int labelSkipCount, final double boxStartX, final double barWidth) {
-		return getTrxCountBarChartSVG(this.density, labelSkipCount, boxStartX, barWidth);
+	String getTrxCountBarChartSVG(final int labelSkipCount, final double boxStartX, final double barWidth, final ColorRampScheme colorRampScheme) {
+		return getTrxCountBarChartSVG(this.density, labelSkipCount, boxStartX, barWidth, colorRampScheme);
 	}
 
 	private static String getTrxCountBarChartSVG(final Density<Double, Long, Long> density, final int labelSkipCount, final double boxStartX,
-			final double barWidth) {
+			final double barWidth, final ColorRampScheme colorRampScheme) {
 		final int MAX_BAR_LENGTH = 100;
 
 		final Long[][] matrix = density.getMatrix();
@@ -534,7 +534,7 @@ final class TimeSeriesLatencyDensity {
 
 		final VerticalBarChart barChart = VerticalBarChart.create(columnTotals, labels.toArray(new String[labels.size()]));
 
-		return barChart.toSVG(MAX_BAR_LENGTH, barWidth, boxStartX, X_AXIS_LABEL_FONT_FAMILY, X_AXIS_LABEL_FONT_SIZE, labelSkipCount, true);
+		return barChart.toSVG(MAX_BAR_LENGTH, barWidth, boxStartX, X_AXIS_LABEL_FONT_FAMILY, X_AXIS_LABEL_FONT_SIZE, labelSkipCount, colorRampScheme);
 	}
 
 	@Override

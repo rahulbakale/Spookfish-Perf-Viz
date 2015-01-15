@@ -22,11 +22,11 @@ package spookfishperfviz;
  */
 final class ColorRampCalculator {
 
-	static String[] getColorMap(final long[] values, final HeatMapColorScheme colorScheme) {
+	static String[] getColorMap(final long[] values, final ColorRampScheme colorScheme) {
 		return getColorMap(Utils.toDoubles(values), colorScheme);
 	}
 
-	static String[] getColorMap(final double[] values, final HeatMapColorScheme colorScheme) {
+	static String[] getColorMap(final double[] values, final ColorRampScheme colorScheme) {
 
 		final ColorRampCalculator colorCalculator = new ColorRampCalculator(colorScheme, Utils.getMax(values));
 
@@ -44,7 +44,7 @@ final class ColorRampCalculator {
 	private final double binSize;
 	private final String colorForZeroVal;
 
-	private ColorRampCalculator(final HeatMapColorScheme colorScheme, final double max) {
+	private ColorRampCalculator(final ColorRampScheme colorScheme, final double max) {
 
 		final double min = 1;
 
