@@ -38,7 +38,7 @@ public enum ColorRampScheme {
 	RED_2(ColorPalette.INHOUSE_RED_1, 16),
 	RED_3(ColorPalette.INHOUSE_RED_2, 19);
 
-	static final ColorRampScheme DEFAULT = RED_2;
+	static final ColorRampScheme DEFAULT = GREY;
 
 	private static final String WHITE = "#ffffff";
 
