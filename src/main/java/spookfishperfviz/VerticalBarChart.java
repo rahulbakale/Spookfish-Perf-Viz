@@ -88,15 +88,13 @@ final class VerticalBarChart {
 		for (int i = 0; i < size; i++, x += barWidth) {
 			final double d = data[i];
 			final long scaledBarLength = scale(maxBarLength, max, d);
-			final String color = colors == null ? null : colors[i];
-
 			svgBars.append(indent2);
 			svgBars.append("<line x1=\"").append(x).append("\"");
 			svgBars.append(" y1=\"").append(barStartY).append("\"");
 			svgBars.append(" x2=\"").append(x).append("\"");
 			svgBars.append(" y2=\"").append(barStartY - scaledBarLength).append("\"");
 
-			final String lineColor = color;
+			final String lineColor = colors == null ? null : colors[i];
 			if (lineColor != null) {
 				svgBars.append(" style=\"stroke:").append(lineColor).append("\"");
 			}
