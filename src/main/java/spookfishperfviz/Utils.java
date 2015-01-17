@@ -560,15 +560,11 @@ final class Utils {
 		final BigDecimal interval = range.divide(BigDecimal.valueOf(nIntervalPoints), MathContext.DECIMAL128);
 
 		// TODO - check if casting to int is OK.
-		final int x = (int) Math.floor(Math.log10(interval.doubleValue()) + 1);
+		final int x = Utils.safeToInt(Math.floor(Math.log10(interval.doubleValue()) + 1));
 
 		final BigDecimal tenPowerX = x < 0 ? ONE.divide(TEN.pow(x * -1)) : TEN.pow(x);
 
 		final double y = interval.divide(tenPowerX).doubleValue();
-
-		// System.out.println("min=" + minBD + ", max=" + maxBD + ", range=" +
-		// range + ", interval=" + interval + ", x=" + x + ", y=" + y +
-		// ", tenPowerX=" + tenPowerX);
 
 		if ((y < 0.1) || (y > 1.0)) {
 			throw new RuntimeException("Internal error: " + y);
@@ -607,21 +603,13 @@ final class Utils {
 
 		final double[] intervalPoints = new double[nIntervalPoints];
 
-		/*
-		 * final double niceMin = niceInterval * Math.floor((min / niceInterval)); intervalPoints[0] = niceMin;
-		 * 
-		 * for (int i = 1; i < nIntervalPoints; i++) { intervalPoints[i] = intervalPoints[i - 1] + niceInterval; }
-		 */
+		final BigDecimal niceMin = niceInterval.multiply(minBD.divide(niceInterval, 0, RoundingMode.FLOOR));
 
-		final BigDecimal niceMax = niceInterval.multiply(maxBD.divide(niceInterval, 0, RoundingMode.CEILING)); // niceInterval * Math.ceil((max / niceInterval));
+		intervalPoints[0] = niceMin.doubleValue();
+		BigDecimal prev = niceMin;
 
-		// System.out.println("niceInterval=" + niceInterval + ", niceMax=" + niceMax);
-
-		intervalPoints[intervalPoints.length - 1] = niceMax.doubleValue();
-		BigDecimal prev = niceMax;
-
-		for (int i = intervalPoints.length - 2; i >= 0; i--) {
-			final BigDecimal current = prev.subtract(niceInterval);
+		for (int i = 1; i < intervalPoints.length; i++) {
+			final BigDecimal current = prev.add(niceInterval);
 			intervalPoints[i] = current.doubleValue();
 			prev = current;
 		}
