@@ -42,7 +42,7 @@ final class VerticalBarChart {
 	private VerticalBarChart(final double[] data, final String[] labels) {
 		this.data = data;
 		this.labels = labels;
-		this.max = Utils.minMax(data)[1];
+		this.max = Utils.getMax(data);
 	}
 
 	String toSVG(	final int maxBarLength, 

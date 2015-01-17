@@ -58,7 +58,7 @@ final class HorizontalBarChart {
 		this.data = data;
 		this.dataLabels = dataLabels;
 		this.headerLabel = headerLabel;
-		this.max = Utils.minMax(data)[1];
+		this.max = Utils.getMax(data);
 	}
 
 	@Override
