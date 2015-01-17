@@ -107,9 +107,7 @@ final class VerticalBarChart {
 
 				final String label = Utils.escapeHTMLSpecialChars(labels[i]);
 
-				final String labelColor = color;
-
-				final MultiSpanSVGText multiSpanSVGText = Utils.createMultiSpanSVGText(label, x, labelStartY, labelFontSize, labelColor);
+				final MultiSpanSVGText multiSpanSVGText = Utils.createMultiSpanSVGText(label, x, labelStartY, labelFontSize, null);
 
 				svgLabels.append(multiSpanSVGText.getSvg()).append(NL);
 
