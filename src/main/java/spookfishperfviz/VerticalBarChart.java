@@ -98,7 +98,12 @@ final class VerticalBarChart {
 			if (lineColor != null) {
 				svgBars.append(" style=\"stroke:").append(lineColor).append("\"");
 			}
-			svgBars.append("/>").append(NL);
+			svgBars.append(">");
+
+			/* TOOLTIP */svgBars.append("<title>").append("Value: ").append(d).append("</title>");
+
+			svgBars.append("</line>");
+			svgBars.append(NL);
 
 			final boolean skipLabel = Utils.skipLabel(i, size, labelSkipCount);
 			if (skipLabel == false) {
