@@ -53,52 +53,12 @@ final class HorizontalBarChart {
 	private final double[] data;
 	private final double max;
 
-	private final Double nonZeroMin;
-	private final Double nonZeroMax;
-
 	private HorizontalBarChart(final double[] data, final String[] dataLabels, final String headerLabel) {
 		
 		this.data = data;
 		this.dataLabels = dataLabels;
 		this.headerLabel = headerLabel;
-
-		final double[] sortedData = Utils.sort(data);
-		final double min = sortedData[0];
-		final double max = sortedData[sortedData.length - 1];
-
-		this.max = max;
-
-		if (min == 0) {
-			Double nonZeroMin = null;
-
-			for (int i = 1; i < sortedData.length; i++) {
-				final double d = sortedData[i];
-				if (d != 0) {
-					nonZeroMin = Double.valueOf(d);
-					break;
-				}
-			}
-
-			this.nonZeroMin = nonZeroMin;
-		} else {
-			this.nonZeroMin = Double.valueOf(min);
-		}
-
-		if (max == 0) {
-			Double nonZeroMax = null;
-
-			for (int i = sortedData.length - 2; i >= 0; i--) {
-				final double d = sortedData[i];
-				if (d != 0) {
-					nonZeroMax = Double.valueOf(d);
-					break;
-				}
-			}
-
-			this.nonZeroMax = nonZeroMax;
-		} else {
-			this.nonZeroMax = Double.valueOf(max);
-		}
+		this.max = Utils.minMax(data)[1];
 	}
 
 	@Override
@@ -137,26 +97,24 @@ final class HorizontalBarChart {
 		return buf.toString();
 	}
 
-	String toSVG(final boolean wrapInHtmlBody, final boolean useColorCoding) {
-		return toSVG(DEFAULT_LIMIT_FOR_SVG, wrapInHtmlBody, useColorCoding);
+	String toSVG(final boolean wrapInHtmlBody, final ColorRampScheme colorRampScheme) {
+		return toSVG(DEFAULT_LIMIT_FOR_SVG, wrapInHtmlBody, colorRampScheme);
 	}
 
-	private String toSVG(final int maxLineLength, final boolean wrapInHtmlBody, final boolean useColorCoding) {
-		return wrapInHtmlBody ? toSVGHtml(maxLineLength, useColorCoding) : toSVG(maxLineLength, useColorCoding);
+	private String toSVG(final int maxLineLength, final boolean wrapInHtmlBody, final ColorRampScheme colorRampScheme) {
+		return wrapInHtmlBody ? toSVGHtml(maxLineLength, colorRampScheme) : toSVG(maxLineLength, colorRampScheme);
 	}
 
-	private String toSVGHtml(final int maxLineLength, final boolean useColorCoding) {
+	private String toSVGHtml(final int maxLineLength, final ColorRampScheme colorRampScheme) {
 		final String NL = System.lineSeparator();
-		return "<!DOCTYPE html>" + NL + "<html>" + NL + "  <body>" + NL + toSVG(maxLineLength, useColorCoding) + NL + "  </body>" + NL + "</html>";
+		return "<!DOCTYPE html>" + NL + "<html>" + NL + "  <body>" + NL + toSVG(maxLineLength, colorRampScheme) + NL + "  </body>" + NL + "</html>";
 	}
 
-	private String toSVG(final int maxLineLength, final boolean useColorCoding) {
+	private String toSVG(final int maxLineLength, final ColorRampScheme colorRampScheme) {
 		
 		final double[] data = this.data;
 		final int size = data.length;
-		final Double nonZeroMin = this.nonZeroMin;
 		final double max = this.max;
-		final Double nonZeroMax = this.nonZeroMax;
 		final String[] dataLabels = this.dataLabels;
 		final String headerLabel = this.headerLabel;
 		
@@ -222,13 +180,11 @@ final class HorizontalBarChart {
 			}
 		}
 
+		final String[] colors = colorRampScheme == null ? null : ColorRampCalculator.getColorMap(data, colorRampScheme);
+
 		for (int i = 0; i < size; i++, y1 += LINE_GAP) {
 			
 			final double d = data[i];
-
-			final String[] lineAndLabelColor = useColorCoding ? getLineAndLabelColor(d, nonZeroMin, nonZeroMax) : null;
-			final String lineColor = lineAndLabelColor == null ? null : lineAndLabelColor[0];
-			final String labelColor = lineAndLabelColor == null ? null : lineAndLabelColor[1];
 
 			final long scaledLineLength = scale(maxLineLength, max, d);
 			final String dataLabel = Utils.getPaddedLabel(dataLabels[i], maxLabelLength, true); 
@@ -239,6 +195,7 @@ final class HorizontalBarChart {
 					.append(" x2=\"").append(xLineStart + scaledLineLength).append("\"")
 					.append(" y2=\"").append(y1).append("\"");
 			
+			final String lineColor = colors == null ? null : colors[i];
 			if (lineColor != null) {
 				svgLines.append(" style=\"stroke:").append(lineColor).append("\"");
 			}
@@ -249,9 +206,6 @@ final class HorizontalBarChart {
 					.append("<text x=\"").append(LABEL_START_X).append("\"")
 					.append(" y=\"").append(y1).append("\"");
 			
-			if (labelColor != null) {
-				svgLabels.append(" fill=\"").append(labelColor).append("\"");
-			}
 			svgLabels.append(">").append(dataLabel).append("</text>").append(NL);
 		}
 
@@ -268,22 +222,6 @@ final class HorizontalBarChart {
 				"  </svg>";
 
 		return svg;
-	}
-
-	private static String[] getLineAndLabelColor(final double data, final Double nonZeroMin, final Double nonZeroMax) {
-		final String color;
-
-		if (data == 0) {
-			color = "grey";
-		} else if (data == nonZeroMax.doubleValue()) {
-			color = "red";
-		} else if (data == nonZeroMin.doubleValue()) {
-			color = "blue";
-		} else {
-			color = "green";
-		}
-
-		return new String[] { color, color };
 	}
 
 	private static long scale(final long limit, final double maxData, final double data) {
