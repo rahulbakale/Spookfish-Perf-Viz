@@ -42,7 +42,7 @@ abstract class Histogram<C extends Comparable<C>> {
 		return Histogram2.newInstance(data, intervalPoints, false);
 	}
 
-	abstract String toSVG(Function<C, String> dataPointFormatter, boolean wrapInHtmlBody);
+	abstract String toSVG(Function<C, String> dataPointFormatter, boolean wrapInHtmlBody, ColorRampScheme colorRampScheme);
 
 	abstract String toString(Function<C, String> dataPointFormatter, int maxHeight, String mark);
 }

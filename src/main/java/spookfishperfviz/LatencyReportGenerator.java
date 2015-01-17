@@ -860,7 +860,7 @@ public final class LatencyReportGenerator {
 
 			final String content = 
 					paragraph(linkWithId(textA, linkIdA) + ':', style) + getShortSummaryHtml() + BR + BR +
-					paragraph(linkWithId(textB, linkIdB) + ':', style) + createHistogram(intervalPointsForLatencyHistogram).toSVG(new StripTrailingZeroesAfterDecimalFunction(false), false) + BR + BR + 
+					paragraph(linkWithId(textB, linkIdB) + ':', style) + createHistogram(intervalPointsForLatencyHistogram).toSVG(new StripTrailingZeroesAfterDecimalFunction(false), false, colorRampScheme) + BR + BR + 
 					paragraph(linkWithId(textC, linkIdC) + ':', style) + getPercentiles(percentileKeys).toSVG(false) + BR + BR + 
 					paragraph(linkWithId(textD, linkIdD) + ':', style) + trxCountBarChartSVG + BR + BR + heatMapSVG.getSvg();
 

@@ -42,7 +42,7 @@ final class Percentiles {
 	}
 
 	public String toSVG(final boolean wrapInHtmlBody) {
-		return toBarChart().toSVG(wrapInHtmlBody, false);
+		return toBarChart().toSVG(wrapInHtmlBody, null);
 	}
 
 	@Override

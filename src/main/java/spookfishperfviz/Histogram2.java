@@ -115,8 +115,8 @@ final class Histogram2<C extends Comparable<C>> extends Histogram<C> {
 	}
 
 	@Override
-	String toSVG(final Function<C, String> dataPointFormatter, final boolean wrapInHtmlBody) {
-		return toBarChart(dataPointFormatter).toSVG(wrapInHtmlBody, true);
+	String toSVG(final Function<C, String> dataPointFormatter, final boolean wrapInHtmlBody, final ColorRampScheme colorRampScheme) {
+		return toBarChart(dataPointFormatter).toSVG(wrapInHtmlBody, colorRampScheme);
 	}
 
 	private HorizontalBarChart toBarChart(final Function<C, String> dataPointFormatter) {

@@ -28,7 +28,11 @@ final class ColorRampCalculator {
 
 	static String[] getColorMap(final double[] values, final ColorRampScheme colorScheme) {
 
-		final ColorRampCalculator colorCalculator = new ColorRampCalculator(colorScheme, Utils.getMax(values));
+		final double[] minMax = Utils.minMax(values);
+		final double min = minMax[0];
+		final double max = minMax[1];
+
+		final ColorRampCalculator colorCalculator = new ColorRampCalculator(min, max, colorScheme);
 
 		final int size = values.length;
 		final String[] colorMap = new String[size];
@@ -39,18 +43,20 @@ final class ColorRampCalculator {
 
 		return colorMap;
 	}
-
+	
 	private final String[] colors;
 	private final double binSize;
 	private final String colorForZeroVal;
+	private final double minVal;
+	private final double maxVal;
 
-	private ColorRampCalculator(final ColorRampScheme colorScheme, final double max) {
-
-		final double min = 1;
+	private ColorRampCalculator(final double minVal, final double maxVal, final ColorRampScheme colorScheme) {
 
 		this.colors = colorScheme.getForegroundColors();
-		this.binSize = ((max - min) + 1) / this.colors.length;
+		this.binSize = (maxVal - minVal) / this.colors.length; // ((max - 1) + 1) / this.colors.length;
 		this.colorForZeroVal = colorScheme.getBackgroundColor();
+		this.minVal = minVal;
+		this.maxVal = maxVal;
 	}
 
 	private String getColor(final double val) {
@@ -60,8 +66,14 @@ final class ColorRampCalculator {
 		if (val == 0) {
 			color = this.colorForZeroVal;
 		} else {
-			final int binNumber = Utils.safeToInt(Math.floor((val - 1) / this.binSize));
-			color = this.colors[binNumber];
+
+			final String[] clrs = this.colors;
+
+			// final int binNumber = Utils.safeToInt(Math.floor((val - 1) / this.binSize));
+
+			final int binNumber = (val == this.maxVal) ? (clrs.length - 1) : Utils.safeToInt(Math.floor((val - this.minVal) / this.binSize));
+
+			color = clrs[binNumber];
 		}
 
 		return color;
