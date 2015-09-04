@@ -503,20 +503,6 @@ final class Utils {
 		return createIntervalPoints(min, max, nIntervalPoints);
 	}
 
-	static double[] getAdjustedMinMax(final double min, final double max) {
-
-		// TODO - also adjust for values less than one
-		final double newMin = min < 1 ? min : Math.floor(min);
-		// TODO - also adjust for values less than one
-		final double newMax = max < 1 ? max : Math.ceil(max);
-
-		if (newMin > newMax) {
-			throw new IllegalArgumentException("min = <" + newMin + ">, max = <" + newMax + ">");
-		}
-
-		return new double[] { newMin, newMax };
-	}
-
 	/**
 	 * TODO - test with various data samples TODO - verify mathematical
 	 * precision

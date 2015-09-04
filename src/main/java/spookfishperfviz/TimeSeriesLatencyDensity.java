@@ -138,12 +138,19 @@ final class TimeSeriesLatencyDensity {
 	
 	private static double[] createIntervalPoints(final double minIntervalPoint, final double maxIntervalPoint, final int maxIntervalPoints) {
 
-		final double[] adjustedMinMax = Utils.getAdjustedMinMax(minIntervalPoint, maxIntervalPoint);
-		final double adjustedMin = adjustedMinMax[0];
-		final double adjustedMax = adjustedMinMax[1];
-
-		final int nIntervalPointsForLatencyDensity = Math.min(maxIntervalPoints, (int) Math.ceil(adjustedMax - adjustedMin));
-		return Utils.createIntervalPoints(adjustedMin, adjustedMax, nIntervalPointsForLatencyDensity);
+		final double adjustedMin = Math.floor(minIntervalPoint);
+		final double adjustedMax = Math.ceil(maxIntervalPoint);
+		
+		if (adjustedMin > adjustedMax) {
+			throw new IllegalArgumentException("min = <" + adjustedMin + ">, max = <" + adjustedMax + ">");
+		}
+		
+		//adjustedMin will be equal to adjustedMax in cases like minIntervalPoint=3.0 and maxIntervalPoint=3.0. 
+		//In such cases nIntervalPoints can be taken as 1. 
+		
+		final int nIntervalPoints = adjustedMin == adjustedMax ? 1 : Math.min(maxIntervalPoints, (int) Math.ceil(adjustedMax - adjustedMin));
+		
+		return Utils.createIntervalPoints(adjustedMin, adjustedMax, nIntervalPoints);
 	}
 
 	
