@@ -200,14 +200,14 @@ public final class LatencyReportGenerator {
 		linksHtml.append("<th>").append(createHtmlTextWithLink("Mean", "http://en.wikipedia.org/wiki/Mean")).append(" latency").append("</th>").append(NL);
 		linksHtml.append("<th>Minimum latency</th>").append(NL);
 		linksHtml.append("<th>Maximum latency</th>").append(NL);
-		linksHtml.append(createHtmlColumnHeaderWithLink("Std. Deviation", "http://en.wikipedia.org/wiki/Standard_deviation")).append(NL);
-		linksHtml.append(createHtmlColumnHeaderWithLink("Variance", "http://en.wikipedia.org/wiki/Variance")).append(NL);
-		linksHtml.append(createHtmlColumnHeaderWithLink("Skewness", "http://en.wikipedia.org/wiki/Skewness")).append(NL);
-		linksHtml.append(createHtmlColumnHeaderWithLink("Kurtosis", "http://en.wikipedia.org/wiki/Kurtosis")).append(NL);
 		linksHtml.append("<th>Summary</th>").append(NL);
 		linksHtml.append(createHtmlColumnHeaderWithLink("Histogram", "http://en.wikipedia.org/wiki/Histogram")).append(NL);
 		linksHtml.append(createHtmlColumnHeaderWithLink("Percentiles", "http://en.wikipedia.org/wiki/Percentile")).append(NL);
 		linksHtml.append(createHtmlColumnHeaderWithLink("Heat Map", "http://en.wikipedia.org/wiki/Heat_map")).append(NL);
+		linksHtml.append(createHtmlColumnHeaderWithLink("Std. Deviation", "http://en.wikipedia.org/wiki/Standard_deviation")).append(NL);
+		linksHtml.append(createHtmlColumnHeaderWithLink("Variance", "http://en.wikipedia.org/wiki/Variance")).append(NL);
+		linksHtml.append(createHtmlColumnHeaderWithLink("Skewness", "http://en.wikipedia.org/wiki/Skewness")).append(NL);
+		linksHtml.append(createHtmlColumnHeaderWithLink("Kurtosis", "http://en.wikipedia.org/wiki/Kurtosis")).append(NL);
 		linksHtml.append("</tr>").append(NL);
 
 		final TreeMap<Double, String> linkHtmlsSortedByMedian = new TreeMap<>();
@@ -848,14 +848,14 @@ public final class LatencyReportGenerator {
 					"<td " + columnStyle + ">" + toDisplayString(this.mean) + "</td>" + NL + 
 					"<td " + columnStyle + ">" + toDisplayString(this.min) + "</td>" + NL + 
 					"<td " + columnStyle + ">" + toDisplayString(this.max) + "</td>" + NL + 
-					"<td " + columnStyle + ">" + toDisplayString(this.stdDeviation) + "</td>" + NL + 
-					"<td " + columnStyle + ">" + toDisplayString(this.variance) + "</td>" + NL + 
-					"<td " + columnStyle + ">" + toDisplayString(this.skewness) + "</td>" + NL + 
-					"<td " + columnStyle + ">" + toDisplayString(this.excessKurtosis) + "</td>" + NL + 
 					"<td " + columnStyle + ">" + linkWithRef(typeA, linkIdA) + "</td>" + NL + 
 					"<td " + columnStyle + ">" + linkWithRef(typeB, linkIdB) + "</td>" + NL + 
 					"<td " + columnStyle + ">" + linkWithRef(typeC, linkIdC) + "</td>" + NL + 
 					"<td " + columnStyle + ">" + linkWithRef(typeD, linkIdD) + "</td>" + NL + 
+					"<td " + columnStyle + ">" + toDisplayString(this.stdDeviation) + "</td>" + NL + 
+					"<td " + columnStyle + ">" + toDisplayString(this.variance) + "</td>" + NL + 
+					"<td " + columnStyle + ">" + toDisplayString(this.skewness) + "</td>" + NL + 
+					"<td " + columnStyle + ">" + toDisplayString(this.excessKurtosis) + "</td>" + NL + 
 					"</tr>" + NL;
 
 			final String content = 
