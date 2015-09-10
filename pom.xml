@@ -22,7 +22,7 @@
 	
 	<groupId>spookfishperfviz</groupId>
 	<artifactId>SpookfishPerfViz</artifactId>
-	<version>0.1.0-alpha</version>
+	<version>0.1.0</version>
 	<name>Spookfish Perf Viz</name>
 
 	<description>Performance Visualization Tools</description>
@@ -60,9 +60,16 @@
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 	</properties>
+	
+	<dependencies>
+		<dependency>
+			<groupId>junit</groupId>
+			<artifactId>junit</artifactId>
+			<version>4.12</version>
+		</dependency>
+	</dependencies>
 
 	<build>
-
 		<resources>
 			<resource>
 				<directory>${project.basedir}</directory>
@@ -92,6 +99,13 @@
 					<excludes>
 						<exclude>spookfishperfviz/WorkInProgress*.java</exclude>
 					</excludes>
+					<archive>
+						<manifestEntries>
+							<Created-By>${java.version} (${java.vendor})</Created-By>
+							<Built-By>Apache Maven ${maven.version}</Built-By>
+							<Build-Jdk>${java.version} (${java.vendor})</Build-Jdk>
+						</manifestEntries>
+					</archive>
 				</configuration>
 				<executions>
 					<execution>
@@ -99,6 +113,13 @@
 						<goals>
 							<goal>jar</goal>
 						</goals>
+						<configuration>
+							<archive>
+								<manifest>
+									<addDefaultImplementationEntries>true</addDefaultImplementationEntries>
+								</manifest>
+							</archive>
+						</configuration>
 					</execution>
 				</executions>
 			</plugin>
@@ -110,6 +131,13 @@
 					<excludes>
 						<exclude>spookfishperfviz/WorkInProgress*.java</exclude>
 					</excludes>
+					<archive>
+						<manifestEntries>
+							<Created-By>${java.version} (${java.vendor})</Created-By>
+							<Built-By>Apache Maven ${maven.version}</Built-By>
+							<Build-Jdk>${java.version} (${java.vendor})</Build-Jdk>
+						</manifestEntries>
+					</archive>
 				</configuration>
 				<executions>
 					<execution>
@@ -117,9 +145,49 @@
 						<goals>
 							<goal>jar</goal>
 						</goals>
+						<configuration>
+							<archive>
+								<manifest>
+									<addDefaultImplementationEntries>true</addDefaultImplementationEntries>
+								</manifest>
+							</archive>
+						</configuration>
 					</execution>
 				</executions>
 			</plugin>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+        		<artifactId>maven-jar-plugin</artifactId>
+        		<version>2.4</version>
+        		<configuration>
+					<archive>
+						<manifestEntries>
+							<Created-By>${java.version} (${java.vendor})</Created-By>
+							<Built-By>Apache Maven ${maven.version}</Built-By>
+							<Build-Jdk>${java.version} (${java.vendor})</Build-Jdk>
+						</manifestEntries>
+					</archive>
+				</configuration>
+        		<executions>
+          			<execution>
+            			<id>default-jar</id>
+            			<phase>package</phase>
+            			<goals>
+              				<goal>jar</goal>
+            			</goals>
+            			<configuration>
+            				<archive>
+								<manifestEntries>
+									<Main-Class>spookfishperfviz.Main</Main-Class>
+								</manifestEntries>
+								<manifest>
+									<addDefaultImplementationEntries>true</addDefaultImplementationEntries>
+								</manifest>
+							</archive>
+            			</configuration>
+          			</execution>
+        		</executions>
+      		</plugin>
 		</plugins>
 	</build>
 </project>
