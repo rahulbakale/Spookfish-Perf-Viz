@@ -18,6 +18,7 @@
 package spookfishperfviz;
 
 import java.text.SimpleDateFormat;
+import java.util.TimeZone;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -35,18 +36,23 @@ public final class SimpleRegexBasedRecordParser extends RecordParser {
 		}
 	}
 
-	public static RecordParser create(final String ignorePattern, final String parsePattern, final String timestampPattern) {
-		return new SimpleRegexBasedRecordParser(ignorePattern, parsePattern, timestampPattern);
+	public static RecordParser create(final String ignorePattern, final String parsePattern, final String timestampPattern, final TimeZone timeZone) {
+		return new SimpleRegexBasedRecordParser(ignorePattern, parsePattern, timestampPattern, timeZone);
 	}
 
 	private final String ignorePattern;
 	private final Pattern parsePatternObj;
 	private final SimpleDateFormat timestampDateFormat;
 
-	private SimpleRegexBasedRecordParser(final String ignorePattern, final String parsePattern, final String timestampPattern) {
+	private SimpleRegexBasedRecordParser(final String ignorePattern, final String parsePattern, final String timestampPattern, final TimeZone timeZone) {
+		
 		this.ignorePattern = ignorePattern;
 		this.parsePatternObj = Pattern.compile(parsePattern);
-		this.timestampDateFormat = new SimpleDateFormat(timestampPattern);
+		
+		final SimpleDateFormat dateFormat = new SimpleDateFormat(timestampPattern);
+		dateFormat.setTimeZone(timeZone);
+		
+		this.timestampDateFormat = dateFormat;
 	}
 
 	@Override

@@ -38,6 +38,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Scanner;
 import java.util.Set;
+import java.util.TimeZone;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -647,10 +648,13 @@ final class Utils {
 			} else if (type == ColorRampScheme.class) {
 				value = ColorRampScheme.valueOf(s);
 
+			} else if (type == TimeZone.class){
+				value = TimeZone.getTimeZone(s);
+
 			} else if ((type == Boolean[].class) || (type == boolean[].class) || (type == Short[].class) || (type == short[].class)
 					|| (type == Integer[].class) || (type == int[].class) || (type == Long[].class) || (type == long[].class)
 					|| (type == Float[].class) || (type == float[].class) || (type == Double[].class) || (type == double[].class)
-					|| (type == TimeUnit[].class) || (type == ColorRampScheme[].class)) {
+					|| (type == TimeUnit[].class) || (type == ColorRampScheme[].class) || (type == TimeZone[].class)) {
 
 				final String[] elements = s.split("\\s*,\\s*", -1);
 				final int len = elements.length;

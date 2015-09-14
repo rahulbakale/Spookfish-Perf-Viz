@@ -46,6 +46,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.TimeZone;
 import java.util.TreeMap;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -67,7 +68,8 @@ public final class LatencyReportGenerator {
 		final String ignorePattern = options.getOptional("ignorePattern", String.class, null);
 		final String parsePattern = options.getMandatory("parsePattern", String.class);
 		final String timestampPattern = options.getMandatory("timestampPattern", String.class);
-		final RecordParser parser = SimpleRegexBasedRecordParser.create(ignorePattern, parsePattern, timestampPattern);
+		final TimeZone inputTimeZone = options.getOptional("inputTimeZone", TimeZone.class, TimeZone.getDefault());
+		final RecordParser parser = SimpleRegexBasedRecordParser.create(ignorePattern, parsePattern, timestampPattern, inputTimeZone);
 
 		final TimeUnit latencyUnit = options.getMandatory("latencyUnit", TimeUnit.class);
 

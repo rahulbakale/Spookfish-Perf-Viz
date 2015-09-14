@@ -24,7 +24,12 @@ package spookfishperfviz;
 public final class Record {
 	
 	private final String eventName;
+	
+	/**
+	 * Timezone-independent time
+	 */
 	private final long timestamp;
+	
 	private final double latency;
 
 	public Record(final String eventName, final long timestamp, final double latency) {
