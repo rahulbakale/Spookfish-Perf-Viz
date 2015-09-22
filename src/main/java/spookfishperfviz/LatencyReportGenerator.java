@@ -69,6 +69,7 @@ public final class LatencyReportGenerator {
 		final String parsePattern = options.getMandatory("parsePattern", String.class);
 		final String timestampPattern = options.getMandatory("timestampPattern", String.class);
 		final TimeZone inputTimeZone = options.getOptional("inputTimeZone", TimeZone.class, TimeZone.getDefault());
+		final TimeZone outputTimeZone = options.getOptional("outputTimeZone", TimeZone.class, TimeZone.getDefault());
 		final RecordParser parser = SimpleRegexBasedRecordParser.create(ignorePattern, parsePattern, timestampPattern, inputTimeZone);
 
 		final TimeUnit latencyUnit = options.getMandatory("latencyUnit", TimeUnit.class);
@@ -88,7 +89,7 @@ public final class LatencyReportGenerator {
 
 		try (final Reader fr = new FileReader(inFile); final Reader source = new BufferedReader(fr);) {
 			
-			path = generateReport(source, parser, latencyUnit, histogramIntervalPoints, percentilePoints, 
+			path = generateReport(source, parser, latencyUnit, outputTimeZone, histogramIntervalPoints, percentilePoints, 
 									heatMapMaxIntervalPoints, heatMapSingleAreaWidth, colorRampScheme, outFile);
 		}
 
@@ -98,6 +99,7 @@ public final class LatencyReportGenerator {
 	public static Path generateReport(	final Reader source,
 										final RecordParser parser, 
 										final TimeUnit latencyUnit,
+										final TimeZone outputTimeZone, 
 										final double[] intervalPointsForLatencyHistogram, 
 										final double[] percentileKeys, 
 										final Integer maxIntervalPointsForLatencyDensity,
@@ -109,17 +111,18 @@ public final class LatencyReportGenerator {
 			@Override
 			public String[] toHtml(final LatencyStats stats) {
 
-				final TimeSeriesLatencyDensity density = TimeSeriesLatencyDensity.create(stats.getLatencies(), stats.getTimestamps(), maxIntervalPointsForLatencyDensity);
+				final TimeSeriesLatencyDensity density = TimeSeriesLatencyDensity.create(stats.getLatencies(), stats.getTimestamps(), outputTimeZone, maxIntervalPointsForLatencyDensity);
 				return stats.toHtml(intervalPointsForLatencyHistogram, percentileKeys, density, heatMapSingleAreaWidth, colorRampScheme);
 			}
 		};
 
-		return generateReport(source, parser, latencyUnit, latencyStatsToHtmlFunc, outputFilePath);
+		return generateReport(source, parser, latencyUnit, outputTimeZone, latencyStatsToHtmlFunc, outputFilePath);
 	}
 
 	public static Path generateReport(	final Reader source,
 										final RecordParser parser, 
 										final TimeUnit latencyUnit,
+										final TimeZone outputTimeZone, 
 										final double[] intervalPointsForLatencyHistogram, 
 										final double[] percentileKeys, 
 										final double minIntervalPointForLatencyDensity, 
@@ -133,17 +136,18 @@ public final class LatencyReportGenerator {
 			@Override
 			public String[] toHtml(final LatencyStats stats) {
 
-				final TimeSeriesLatencyDensity density = TimeSeriesLatencyDensity.create(stats.getLatencies(), stats.getTimestamps(), minIntervalPointForLatencyDensity, maxIntervalPointForLatencyDensity, maxIntervalPointsForLatencyDensity);
+				final TimeSeriesLatencyDensity density = TimeSeriesLatencyDensity.create(stats.getLatencies(), stats.getTimestamps(), outputTimeZone, minIntervalPointForLatencyDensity, maxIntervalPointForLatencyDensity, maxIntervalPointsForLatencyDensity);
 				return stats.toHtml(intervalPointsForLatencyHistogram, percentileKeys, density, heatMapSingleAreaWidth, colorRampScheme);
 			}
 		};
 
-		return generateReport(source, parser, latencyUnit, latencyStatsToHtmlFunc, outputFilePath);
+		return generateReport(source, parser, latencyUnit, outputTimeZone, latencyStatsToHtmlFunc, outputFilePath);
 	}
 
 	private static Path generateReport(	final Reader source,
 										final RecordParser parser, 
 										final TimeUnit latencyUnit, 
+										final TimeZone outputTimeZone, 
 										final LatencyStatsToHtmlFunc latencyStatsToHtmlFunc, 
 										final String outputFilePath) throws IOException {
 
@@ -157,7 +161,7 @@ public final class LatencyReportGenerator {
 				// contents of input file have not changed since last read.
 
 				final File rawFile = createRawFile(recordIterator);
-				reportFilePath = generateReport(rawFile, latencyUnit, latencyStatsToHtmlFunc, outputFilePath);
+				reportFilePath = generateReport(rawFile, latencyUnit, outputTimeZone, latencyStatsToHtmlFunc, outputFilePath);
 
 			} else {
 				final Map<String, List<TimestampAndLatency>> data = new TreeMap<>();
@@ -167,7 +171,7 @@ public final class LatencyReportGenerator {
 					addRecord(record.getEventName(), record.getTimestamp(), record.getLatency(), data);
 				}
 
-				reportFilePath = generateReport(data, latencyUnit, latencyStatsToHtmlFunc, outputFilePath);
+				reportFilePath = generateReport(data, latencyUnit, outputTimeZone, latencyStatsToHtmlFunc, outputFilePath);
 			}
 
 			return reportFilePath;
@@ -176,14 +180,16 @@ public final class LatencyReportGenerator {
 
 	private static Path generateReport(	final File rawDataFile,
 										final TimeUnit latencyUnit, 
+										final TimeZone outputTimeZone, 
 										final LatencyStatsToHtmlFunc latencyStatsToHtmlFunc, 
 										final String outputFilePath) throws IOException, FileNotFoundException {
 		
-		return generateReport(parseRawFile(rawDataFile), latencyUnit, latencyStatsToHtmlFunc, outputFilePath);
+		return generateReport(parseRawFile(rawDataFile), latencyUnit, outputTimeZone, latencyStatsToHtmlFunc, outputFilePath);
 	}
 
 	private static Path generateReport(	final Map<String, List<TimestampAndLatency>> data, 
 										final TimeUnit latencyUnit, 
+										final TimeZone outputTimeZone, 
 										final LatencyStatsToHtmlFunc latencyStatsToHtmlFunc, 
 										final String reportFilePath) throws IOException {
 
@@ -218,7 +224,7 @@ public final class LatencyReportGenerator {
 			final String eventType = entry.getKey();
 			final List<TimestampAndLatency> latencies = entry.getValue();
 
-			final Stats stats = Stats.create(latencies, latencyUnit, eventType);
+			final Stats stats = Stats.create(latencies, latencyUnit, outputTimeZone, eventType);
 			final LatencyStats latencyStats = stats.getLatencyStats();
 			final String[] h = latencyStatsToHtmlFunc.toHtml(latencyStats);
 
@@ -231,7 +237,7 @@ public final class LatencyReportGenerator {
 		}
 
 		{
-			final Stats stats = Stats.create(latenciesSuperSet, latencyUnit, "All APIs combined");
+			final Stats stats = Stats.create(latenciesSuperSet, latencyUnit, outputTimeZone, "All APIs combined");
 			final LatencyStats latencyStats = stats.getLatencyStats();
 			final String[] h = latencyStatsToHtmlFunc.toHtml(latencyStats);
 
@@ -358,7 +364,7 @@ public final class LatencyReportGenerator {
 
 	private static final class Stats {
 		
-		static Stats create(final List<TimestampAndLatency> latencyData, final TimeUnit latencyUnit, final String eventType) {
+		static Stats create(final List<TimestampAndLatency> latencyData, final TimeUnit latencyUnit, final TimeZone outputTimeZone, final String eventType) {
 			final int len = latencyData.size();
 
 			final double[] latencies = new double[len];
@@ -371,7 +377,7 @@ public final class LatencyReportGenerator {
 				i++;
 			}
 
-			return new Stats(latencies, latencyUnit, timestamps, eventType);
+			return new Stats(latencies, latencyUnit, timestamps, outputTimeZone, eventType);
 		}
 
 		private final LatencyStats latencyStats;
@@ -379,9 +385,9 @@ public final class LatencyReportGenerator {
 		// TODO - include volume stats in the report
 		private final VolumeStats volumeStats;
 
-		Stats(final double[] latencies, final TimeUnit latencyUnit, final long[] timestamps, final String eventType) {
+		Stats(final double[] latencies, final TimeUnit latencyUnit, final long[] timestamps, final TimeZone outputTimeZone, final String eventType) {
 			this.latencyStats = LatencyStats.create(latencies, latencyUnit, timestamps, eventType);
-			this.volumeStats = VolumeStats.create(timestamps);
+			this.volumeStats = VolumeStats.create(timestamps, outputTimeZone);
 		}
 
 		LatencyStats getLatencyStats() {
@@ -479,22 +485,24 @@ public final class LatencyReportGenerator {
 
 	private static final class VolumeStats {
 		
-		static VolumeStats create(final long[] timestamps) {
-			return new VolumeStats(timestamps);
+		static VolumeStats create(final long[] timestamps, final TimeZone outputTimeZone) {
+			return new VolumeStats(timestamps, outputTimeZone);
 		}
 
 		private final Map<Long, DailyVolumeStats> data;
 
-		private VolumeStats(final long[] timestamps) {
+		private VolumeStats(final long[] timestamps, final TimeZone outputTimeZone) {
 			this.data = new HashMap<>();
 
 			for (final long ts : timestamps) {
-				add(ts);
+				add(ts, outputTimeZone);
 			}
 		}
 
-		private void add(final long timestamp) {
-			final Long startOfDay = Utils.getStartOfDay(timestamp);
+		private void add(final long timestamp, final TimeZone outputTimeZone) {
+			
+			//TODO - Utils.getStartOfDay(..) create a new Calendar object per call. Optimization needed.
+			final Long startOfDay = Utils.getStartOfDay(timestamp, outputTimeZone);
 
 			DailyVolumeStats stats = this.data.get(startOfDay);
 

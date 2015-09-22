@@ -20,12 +20,15 @@ package spookfishperfviz;
 import static spookfishperfviz.Utils.forEach;
 import static spookfishperfviz.Utils.reverse;
 
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Date;
 import java.util.List;
 import java.util.NavigableSet;
 import java.util.Objects;
 import java.util.Set;
+import java.util.TimeZone;
 import java.util.concurrent.TimeUnit;
 
 import spookfishperfviz.Density.IndexedDataPoint;
@@ -58,19 +61,9 @@ final class TimeSeriesLatencyDensity {
 		}
 	};
 
-	private static final Function<Long, String> TIMESTAMP_LABEL_MAKER = new Function<Long, String>() {
-		@Override
-		public String apply(final Long time) {
-			return String.format("%1$tH:%1$tM%n%1$td/%1$tm%n%1$tY", time);
-		}
-	};
 	
-	private static final Function<Long, String> TIMESTAMP_TOOLTIP_MAKER = new Function<Long, String>() {
-		@Override
-		public String apply(final Long time) {
-			return String.format("%1$td/%1$tm/%1$tY %1$tH:%1$tM", time);
-		}
-	};
+
+	
 
 	private static final Function<IndexedDataPoint<Double>, String> Y_AXIS_LABEL_MAKER = new Function<Density.IndexedDataPoint<Double>, String>() {
 		@Override
@@ -79,20 +72,70 @@ final class TimeSeriesLatencyDensity {
 		}
 	};
 
+	private static final class TimestampLabelMaker implements Function<Long, String> {
+
+		private static final String NL = System.lineSeparator();
+
+		private final SimpleDateFormat dayMonthFormat;
+		private final SimpleDateFormat yearFormat;
+		private final SimpleDateFormat timeFormat;
+
+		TimestampLabelMaker(final TimeZone timeZone) {
+
+			final SimpleDateFormat dayMonth = new SimpleDateFormat("dd/MM");
+			dayMonth.setTimeZone(timeZone);
+
+			final SimpleDateFormat year = new SimpleDateFormat("yyyy");
+			year.setTimeZone(timeZone);
+
+			final SimpleDateFormat time = new SimpleDateFormat("HH:mm");
+			time.setTimeZone(timeZone);
+
+			this.dayMonthFormat = dayMonth;
+			this.yearFormat = year;
+			this.timeFormat = time;
+		}
+
+		@Override
+		public String apply(final Long time) {
+			final Date d = new Date(time.longValue());
+			return this.timeFormat.format(d) + NL + this.dayMonthFormat.format(d) + NL + this.yearFormat.format(d);
+		}
+	}
+
+	private static final class TimestampTooltipMaker implements Function<Long, String> {
+
+		private final SimpleDateFormat format;
+
+		TimestampTooltipMaker(final TimeZone timeZone) {
+
+			final SimpleDateFormat f = new SimpleDateFormat("dd/MM/yyyy HH:mm");
+			f.setTimeZone(timeZone);
+
+			this.format = f;
+		}
+
+		@Override
+		public String apply(final Long time) {
+			return this.format.format(time);
+		}
+	}
 
 	static TimeSeriesLatencyDensity create(	final double[] latencies, 
 											final long[] timestamps, 
+											final TimeZone outputTimeZone, 
 											final Integer maxIntervalPointsForLatencyDensity) {
 		
 		final double[] minMax = Utils.minMax(latencies);
 		final double minIntervalPoint = minMax[0];
 		final double maxIntervalPoint = minMax[1];
 
-		return create0(latencies, timestamps, minIntervalPoint, maxIntervalPoint, maxIntervalPointsForLatencyDensity);
+		return create0(latencies, timestamps, outputTimeZone, minIntervalPoint, maxIntervalPoint, maxIntervalPointsForLatencyDensity);
 	}
 
 	static TimeSeriesLatencyDensity create(	final double[] latencies, 
 											final long[] timestamps, 
+											final TimeZone outputTimeZone, 
 											final double minIntervalPointForLatencyDensity, 
 											final double maxIntervalPointForLatencyDensity, 
 											final Integer maxIntervalPointsForLatencyDensity) {
@@ -117,11 +160,12 @@ final class TimeSeriesLatencyDensity {
 			maxIntervalPoint = Math.min(maxLatency, maxIntervalPointForLatencyDensity);
 		}
 
-		return create0(latencies, timestamps, minIntervalPoint, maxIntervalPoint, maxIntervalPointsForLatencyDensity);
+		return create0(latencies, timestamps, outputTimeZone, minIntervalPoint, maxIntervalPoint, maxIntervalPointsForLatencyDensity);
 	}
 	
 	private static TimeSeriesLatencyDensity create0(final double[] latencies, 
 													final long[] timestamps, 
+													final TimeZone outputTimeZone, 
 													final double adjustedMinIntervalPointForLatencyDensity,
 													final double adjustedMaxIntervalPointForLatencyDensity, 
 													final Integer maxIntervalPointsForLatencyDensity) {
@@ -133,7 +177,7 @@ final class TimeSeriesLatencyDensity {
 		final double[] intervalPointsForLatencyDensity = 
 				createIntervalPoints(adjustedMinIntervalPointForLatencyDensity, adjustedMaxIntervalPointForLatencyDensity, maxIntervalPoints);
 		
-		return new TimeSeriesLatencyDensity(latencies, timestamps, intervalPointsForLatencyDensity);
+		return new TimeSeriesLatencyDensity(latencies, timestamps, outputTimeZone, intervalPointsForLatencyDensity);
 	}
 	
 	private static double[] createIntervalPoints(final double minIntervalPoint, final double maxIntervalPoint, final int maxIntervalPoints) {
@@ -157,17 +201,26 @@ final class TimeSeriesLatencyDensity {
 	private final Density<Double, Long, Long> density;
 	private final int defaultTimeLabelSkipCount;
 
-	private TimeSeriesLatencyDensity(final double[] latencies, final long[] timestamps, final double[] responseTimeIntervalPoints) {
-		this(latencies, timestamps, null, Utils.toHashSet(responseTimeIntervalPoints));
+	
+	private final TimestampLabelMaker timestampLabelMaker;
+	private final TimestampTooltipMaker timestampTooltipMaker;
+
+	private TimeSeriesLatencyDensity(final double[] latencies, final long[] timestamps, final TimeZone outputTimeZone, final double[] responseTimeIntervalPoints) {
+		this(latencies, timestamps, outputTimeZone, null, Utils.toHashSet(responseTimeIntervalPoints));
 	}
 
 	private TimeSeriesLatencyDensity(final double[] latencies, 
 									 final long[] timestamps, 
+									 final TimeZone outputTimeZone, 
 									 final Set<Long> inputTimestampIntervalPoints, 
 									 final Set<Double> responseTimeIntervalPoints) {
 		
 		Objects.requireNonNull(latencies);
 		Objects.requireNonNull(timestamps);
+		Objects.requireNonNull(outputTimeZone);
+		
+		this.timestampLabelMaker = new TimestampLabelMaker(outputTimeZone);
+		this.timestampTooltipMaker = new TimestampTooltipMaker(outputTimeZone);
 
 		if (latencies.length != timestamps.length) {
 			throw new IllegalArgumentException("Number of latencies must be same as number of timestamps");
@@ -184,7 +237,7 @@ final class TimeSeriesLatencyDensity {
 		final Set<Long> timestampIntervalPoints;
 		if (inputTimestampIntervalPoints == null) {
 			final long timeIntervalInMillis = (duration > threshold) ? TimeUnit.MINUTES.toMillis(30) : TimeUnit.MINUTES.toMillis(5);
-			timestampIntervalPoints = Utils.getTimestampIntervalPoints(timestamps, timeIntervalInMillis);
+			timestampIntervalPoints = Utils.getTimestampIntervalPoints(timestamps, outputTimeZone, timeIntervalInMillis);
 		} else {
 			timestampIntervalPoints = inputTimestampIntervalPoints;
 		}
@@ -208,7 +261,7 @@ final class TimeSeriesLatencyDensity {
 
 	HeatMapSVG getHeatMapSVG(final TimeUnit latencyUnit, final int timeLabelSkipCount, final double heatMapSingleAreaWidth, final ColorRampScheme colorScheme) {
 
-		return getHeatMapSVG(this.density, colorScheme, timeLabelSkipCount, latencyUnit, heatMapSingleAreaWidth);
+		return getHeatMapSVG(this.density, colorScheme, timeLabelSkipCount, latencyUnit, this.timestampLabelMaker, this.timestampTooltipMaker, heatMapSingleAreaWidth);
 	}
 
 	/**
@@ -218,6 +271,8 @@ final class TimeSeriesLatencyDensity {
 											final ColorRampScheme colorScheme, 
 											final int timeLabelSkipCount,
 											final TimeUnit latencyUnit, 
+											final TimestampLabelMaker timestampLabelMaker, 
+											final TimestampTooltipMaker timestampTooltipMaker, 
 											final double heatMapSingleAreaWidth) {
 		
 		final Long[][] matrix = density.getMatrix();
@@ -371,7 +426,7 @@ final class TimeSeriesLatencyDensity {
 						.append("\" y2=\"").append(xAxisTickEndY).append("\"/>").append(NL);
 		
 				if (skipLabel == false) {
-					final String multiLineLabel = timestampPoints.get(i).toString(TIMESTAMP_LABEL_MAKER);
+					final String multiLineLabel = timestampPoints.get(i).toString(timestampLabelMaker);
 		
 					final MultiSpanSVGText label = Utils.createMultiSpanSVGText(multiLineLabel, x, xAxisLabelStartY, fontSize, null);
 		
@@ -455,8 +510,8 @@ final class TimeSeriesLatencyDensity {
 							
 							colorMapSVG.append("<title>");
 							colorMapSVG.append("Count = ").append(matrix[rowNum][colNum]).append(", Color = ").append(color).append(NL);
-							final String xTooltip1 = timestampPoints.get(colNum).toString(TIMESTAMP_TOOLTIP_MAKER);
-							final String xTooltip2 = timestampPoints.get(colNum + 1).toString(TIMESTAMP_TOOLTIP_MAKER);
+							final String xTooltip1 = timestampPoints.get(colNum).toString(timestampTooltipMaker);
+							final String xTooltip2 = timestampPoints.get(colNum + 1).toString(timestampTooltipMaker);
 							colorMapSVG.append("Period: (").append(xTooltip1).append(" - ").append(xTooltip2).append(')').append(NL);
 							colorMapSVG.append("Latency range: (").append(yTooltip1).append(" - ").append(yTooltip2).append(") ").append(latencyUnitShortForm).append(NL);
 							colorMapSVG.append("</title>");
@@ -510,10 +565,10 @@ final class TimeSeriesLatencyDensity {
 	}
 
 	String getTrxCountBarChartSVG(final int labelSkipCount, final double boxStartX, final double barWidth, final ColorRampScheme colorRampScheme) {
-		return getTrxCountBarChartSVG(this.density, labelSkipCount, boxStartX, barWidth, colorRampScheme);
+		return getTrxCountBarChartSVG(this.density, labelSkipCount, this.timestampLabelMaker, boxStartX, barWidth, colorRampScheme);
 	}
 
-	private static String getTrxCountBarChartSVG(final Density<Double, Long, Long> density, final int labelSkipCount, final double boxStartX,
+	private static String getTrxCountBarChartSVG(final Density<Double, Long, Long> density, final int labelSkipCount, final TimestampLabelMaker timestampLabelMaker, final double boxStartX,
 			final double barWidth, final ColorRampScheme colorRampScheme) {
 		final int MAX_BAR_LENGTH = 100;
 
@@ -536,7 +591,7 @@ final class TimeSeriesLatencyDensity {
 
 		final List<String> labels = new ArrayList<>();
 		for (final IndexedDataPoint<Long> columnIntervalPoint : columnIntervalPoints) {
-			labels.add(columnIntervalPoint.toString(TIMESTAMP_LABEL_MAKER));
+			labels.add(columnIntervalPoint.toString(timestampLabelMaker));
 		}
 
 		final VerticalBarChart barChart = VerticalBarChart.create(columnTotals, labels.toArray(new String[labels.size()]));

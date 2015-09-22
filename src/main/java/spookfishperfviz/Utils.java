@@ -169,7 +169,7 @@ final class Utils {
 	/**
 	 * TODO - check if this is the right place for this method
 	 */
-	static Set<Long> getTimestampIntervalPoints(final long[] timestamps, final long timeIntervalInMillis) {
+	static Set<Long> getTimestampIntervalPoints(final long[] timestamps, final TimeZone timeZone, final long timeIntervalInMillis) {
 		
 		if (timeIntervalInMillis <= 0) {
 			throw new IllegalArgumentException("Invalid time interval: <" + timeIntervalInMillis + ">. Time interval must be a positive value");
@@ -188,7 +188,7 @@ final class Utils {
 			}
 		}
 
-		final long flooredMinTime = getStartOfHour(minTime);
+		final long flooredMinTime = getStartOfHour(minTime, timeZone);
 
 		final Set<Long> timestampIntervalPoints = new HashSet<>();
 		for (long point = flooredMinTime, interval = timeIntervalInMillis; point <= (maxTime + interval); point += interval) {
@@ -206,8 +206,9 @@ final class Utils {
 		return set;
 	}
 
-	static Long getStartOfDay(final long timestamp) {
+	static Long getStartOfDay(final long timestamp, final TimeZone timeZone) {
 		final Calendar calendar = Calendar.getInstance();
+		calendar.setTimeZone(timeZone);
 		calendar.setTimeInMillis(timestamp);
 		calendar.set(Calendar.HOUR_OF_DAY, 0);
 		calendar.set(Calendar.MINUTE, 0);
@@ -217,8 +218,9 @@ final class Utils {
 		return Long.valueOf(calendar.getTimeInMillis());
 	}
 
-	static long getStartOfHour(final long timestamp) {
+	static long getStartOfHour(final long timestamp, final TimeZone timeZone) {
 		final Calendar calendar = Calendar.getInstance();
+		calendar.setTimeZone(timeZone);
 		calendar.setTimeInMillis(timestamp);
 		calendar.set(Calendar.MINUTE, 0);
 		calendar.set(Calendar.SECOND, 0);
